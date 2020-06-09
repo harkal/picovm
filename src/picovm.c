@@ -1,12 +1,12 @@
+#include <memory.h>
 #include "picovm.h"
+
+// #include <stddef.h>
+// void *memcpy(void *__restrict, const void *__restrict, size_t);
 
 #define READ8(x)  (*(uint8_t *)(vm->mem + (x)))
 #define READ16(x) (*(uint16_t *)(vm->mem + (x)))
 #define READ32(x) (*(uint32_t *)(vm->mem + (x)))
-
-#define WRITE8(x, v)  (*(uint8_t *)(vm->mem + (x)) = (v))
-#define WRITE16(x, v) (*(uint16_t *)(vm->mem + (x)) = (v))
-#define WRITE32(x, v) (*(uint32_t *)(vm->mem + (x)) = (v))
 
 static inline int16_t signext(uint16_t val, uint16_t mask)
 {
@@ -16,12 +16,12 @@ static inline int16_t signext(uint16_t val, uint16_t mask)
 	return val;
 }
 
-static inline read_mem(struct picovm_s *vm, uint16_t addr, uint8_t size, void *value)
+static inline void read_mem(struct picovm_s *vm, uint16_t addr, uint8_t size, void *value)
 {
 	memcpy(value, vm->mem + addr, size);
 }
 
-static inline write_mem(struct picovm_s *vm, uint16_t addr, void *value, uint8_t size)
+static inline void write_mem(struct picovm_s *vm, uint16_t addr, void *value, uint8_t size)
 {
 	memcpy(vm->mem + addr, value, size);
 }
@@ -42,12 +42,15 @@ int8_t picovm_exec(struct picovm_s *vm)
 {
     uint8_t opcode = READ8(vm->ip);
     uint32_t a, b, addr;
+
+	float fa, fb;
+
     switch (opcode)
 	{
         case 0x00 ... 0x00 + 3: // LOAD addr
         {
             uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = 1 << (opcode & 0x07);
+			uint8_t size = 1 << (opcode & 0x02);
 			uint32_t value;
 			read_mem(vm, addr, size, &value);
 			push_stack(vm, &value, size);            
@@ -58,7 +61,7 @@ int8_t picovm_exec(struct picovm_s *vm)
         case 0x08 ... 0x08 + 3: // STORE addr
         {
 			uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = 1 << (opcode & 0x07);
+			uint8_t size = 1 << (opcode & 0x02);
 			uint32_t value;
 			pop_stack(vm, size, &value);
 			write_mem(vm, addr, &value, size);
@@ -66,32 +69,49 @@ int8_t picovm_exec(struct picovm_s *vm)
             break;
         }
 
-		case 0x80+0 ... 0x80+14:
-			pop_stack(vm, 4, &b);
-			pop_stack(vm, 4, &a);
-			switch (opcode)
-			{
-				case 0x80 +  0: a += b; break;
-				case 0x80 +  1: a -= b; break;
-				case 0x80 +  2: a *= b; break;
-				case 0x80 +  3: a /= b; break;
-				// case 0x80 +  4: push_stack_32(vm, a % b);  break;
-				// case 0x80 +  5: push_stack_32(vm, a << b); break;
-				// case 0x80 +  6: push_stack_32(vm, a >> b); break;
-				// case 0x80 +  7: push_stack_32(vm, a & b);  break;
-				// case 0x80 +  8: push_stack_32(vm, a | b);  break;
-				// case 0x80 +  9: push_stack_32(vm, a ^ b);  break;
-				// case 0x80 + 10: push_stack_32(vm, a && b); break;
-				// case 0x80 + 11: push_stack_32(vm, a || b); break;
-				// case 0x80 + 12: push_stack_32(vm, ~a);     break;
-				// case 0x80 + 13: push_stack_32(vm, -a);     break;
-				// case 0x80 + 14: push_stack_32(vm, !a);     break;
+		case 0x80+0 ... 0x80+43:
+		{
+			uint8_t cmd = (opcode & 0x3c) >> 2;
+			uint8_t size = 1 << (opcode & 0x02);
+			if (cmd != 7) {
+				pop_stack(vm, size, &b);
 			}
-			push_stack(vm, &a, 4);
+			pop_stack(vm, size, &a);
+			switch (cmd)
+			{
+				case 0: a += b; break;
+				case 1: a -= b; break;
+				case 2: a *= b; break;
+				case 3: a /= b; break;
+				case 4: a %= b; break;
+
+				case 5: a &= b; break;
+				case 6: a |= b; break;
+				case 7: a ^= b; break;
+				case 8: a = !a; break;
+			}
+			push_stack(vm, &a, size);
 			vm->ip++;
 			break;
+		}
+		case 0xac ... 0xac + 4:
+		{
+			uint8_t cmd = (opcode & 0x3c) >> 2;
+			pop_stack(vm, sizeof(float), &fb);
+			pop_stack(vm, sizeof(float), &fa);
+			switch (cmd)
+			{
+				case 11: fa += fb; break;
+				case 12: fa -= fb; break;
+				case 13: fa *= fb; break;
+				case 14: if (fb != 0.0f)fa /= fb; else fa = 0.0f; break;
+			}
+			push_stack(vm, &fa, sizeof(float));
+			vm->ip++;
+			break;
+		}
 		// JMP addr
-		case 0xa0 ... 0xa0+16:
+		case 0xc0 ... 0xc0+16:
 		{
 			// Get jump address
 			if ((opcode & 1) == 0) {
@@ -110,8 +130,6 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 			int32_t top;
 			pop_stack(vm, 4, &top);
-
-			printf("%d, t: %d\n", top, jump_type);
 
 			switch (jump_type)
 			{
