@@ -6,42 +6,6 @@
 
 #define UNUSED __attribute__((unused))
 
-static uint8_t mem_read8(uint16_t addr, void *ctx)
-{
-    uint8_t *memory = ctx;
-	return *(uint8_t *)(memory + addr);
-}
-
-static uint16_t mem_read16(uint16_t addr, void *ctx)
-{
-    uint8_t *memory = ctx;
-	return *(uint16_t *)(memory + addr);
-}
-
-static uint32_t mem_read32(uint16_t addr, void *ctx)
-{
-    uint8_t *memory = ctx;
-	return *(uint32_t *)(memory + addr);
-}
-
-static void mem_write8(uint16_t addr, uint8_t value, void *ctx)
-{
-    uint8_t *memory = ctx;
-	*(uint8_t *)(memory + addr) = value;
-}
-
-static void mem_write16(uint16_t addr, uint16_t value, void *ctx)
-{
-    uint8_t *memory = ctx;
-	*(uint16_t *)(memory + addr) = value;
-}
-
-static void mem_write32(uint16_t addr, uint32_t value, void *ctx)
-{
-    uint8_t *memory = ctx;
-	*(uint32_t *)(memory + addr) = value;
-}
-
 uint8_t vm_memory[64];
 
 void coredump(struct picovm_s *vm, uint16_t size)
@@ -74,13 +38,7 @@ int main(int argc UNUSED, char **argv UNUSED)
 
     struct picovm_s vm = {
 	    0, 64,
-        &vm_memory,
-	    &mem_read8,
-        &mem_read16,
-        &mem_read32,
-        &mem_write8,
-        &mem_write16,
-        &mem_write32
+        &vm_memory
     };
 
     if (argc != 2) {

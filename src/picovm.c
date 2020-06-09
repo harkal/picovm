@@ -1,12 +1,12 @@
 #include "picovm.h"
 
-#define READ8(x) vm->mem_read8((x), vm->ctx)
-#define READ16(x) vm->mem_read16((x), vm->ctx)
-#define READ32(x) vm->mem_read32((x), vm->ctx)
+#define READ8(x)  (*(uint8_t *)(vm->mem + (x)))
+#define READ16(x) (*(uint16_t *)(vm->mem + (x)))
+#define READ32(x) (*(uint32_t *)(vm->mem + (x)))
 
-#define WRITE8(x, v) vm->mem_write8((x), (v), vm->ctx);
-#define WRITE16(x, v) vm->mem_write16((x), (v), vm->ctx);
-#define WRITE32(x, v) vm->mem_write32((x), (v), vm->ctx);
+#define WRITE8(x, v)  (*(uint8_t *)(vm->mem + (x)) = (v))
+#define WRITE16(x, v) (*(uint16_t *)(vm->mem + (x)) = (v))
+#define WRITE32(x, v) (*(uint32_t *)(vm->mem + (x)) = (v))
 
 static inline int16_t signext(uint16_t val, uint16_t mask)
 {
@@ -19,39 +19,38 @@ static inline int16_t signext(uint16_t val, uint16_t mask)
 static inline void push_stack_8(struct picovm_s *vm, uint8_t value)
 {
     vm->sp -= 2;
-    vm->mem_write8(vm->sp, value, vm->ctx);
+	*(uint8_t *)(vm->mem + vm->sp) = value;
 }
 
 static inline void push_stack_16(struct picovm_s *vm, uint16_t value)
 {
     vm->sp -= 2;
-	
-    // vm->mem_write16(vm->sp, value, vm->ctx);
+	*(uint16_t *)(vm->mem + vm->sp) = value;
 }
 
 static inline void push_stack_32(struct picovm_s *vm, uint32_t value)
 {
     vm->sp -= 4;
-    vm->mem_write32(vm->sp, value, vm->ctx);
+	*(uint32_t *)(vm->mem + vm->sp) = value;
 }
 
 static inline uint8_t pop_stack_8(struct picovm_s *vm)
 {
-    uint8_t value = vm->mem_read32(vm->sp, vm->ctx);
+    uint8_t value = *(uint8_t *)(vm->mem + vm->sp);
     vm->sp += 1;
     return value;
 }
 
 static inline uint16_t pop_stack_16(struct picovm_s *vm)
 {
-    uint16_t value = vm->mem_read32(vm->sp, vm->ctx);
+    uint16_t value =  *(uint16_t *)(vm->mem + vm->sp);
     vm->sp += 2;
     return value;
 }
 
 static inline uint32_t pop_stack_32(struct picovm_s *vm)
 {
-    uint32_t value = vm->mem_read32(vm->sp, vm->ctx);
+    uint32_t value =  *(uint32_t *)(vm->mem + vm->sp);
     vm->sp += 4;
     return value;
 }
