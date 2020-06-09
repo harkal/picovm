@@ -28,7 +28,7 @@ void coredump(struct picovm_s *vm, uint16_t size)
         }
     }
 
-    printf("\n");
+    printf("\n N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
 
 }
 
@@ -37,7 +37,7 @@ int main(int argc UNUSED, char **argv UNUSED)
     memset(vm_memory, 0, 64);
 
     struct picovm_s vm = {
-	    0, 64,
+	    0, 64, 0,
         &vm_memory
     };
 

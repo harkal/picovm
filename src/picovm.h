@@ -8,9 +8,13 @@
 extern "C" {
 #endif
 
+#define PICOVM_FLAG_N 1
+#define PICOVM_FLAG_Z 2
+
 struct picovm_s
 {
 	uint16_t ip, sp;
+    uint8_t flags;
 	void *mem;
 };
 

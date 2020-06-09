@@ -90,6 +90,12 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 7: a ^= b; break;
 				case 8: a = !a; break;
 			}
+			uint8_t sign_bit = size * 8 - 1;
+			uint32_t mask = (1 << size*8) - 1;
+			
+			vm->flags = (a & mask) == 0 ? PICOVM_FLAG_Z : 0;
+			if (a & (1 << sign_bit)) vm->flags |= PICOVM_FLAG_N;
+
 			push_stack(vm, &a, size);
 			vm->ip++;
 			break;
@@ -128,33 +134,31 @@ int8_t picovm_exec(struct picovm_s *vm)
 				break;
 			}
 
-			int32_t top;
-			pop_stack(vm, 4, &top);
-
+			uint8_t flags = vm->flags;
 			switch (jump_type)
 			{
 			case 1:
-				if (top == 0)
+				if (flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
 			case 2:
-				if (top != 0)
+				if (~flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
 			case 3:
-				if (top < 0)
+				if (flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
 			case 4:
-				if (top > 0)
+				if (~flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
 			case 5:
-				if (top <= 0)
+				if ( (flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
 			case 6:
-				if (top >= 0)
+				if ( ~(flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
 			}

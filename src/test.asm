@@ -1,13 +1,10 @@
-.l:     LOAD32 [res]
-        LOAD32 [one]
+        LOAD [res]
+.l:     LOAD [one]
         SUB
-        STORE32 [res]
-        LOAD32 [res]
-        ;YIELD
         JLT .l
         
         HLT
 
-one:    DB 0x00000001
-res:    DB 0x00000005
+one:    DB 0x01
+res:    DB 0x05
 

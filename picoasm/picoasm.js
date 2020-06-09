@@ -7,11 +7,11 @@ var opcodes = {
     HLT: 0xff,
     YIELD: 0xfe,
 
-    LOAD8:  0x00 + 0,
+    LOAD:  0x00 + 0,
     LOAD16: 0x00 + 1,
     LOAD32: 0x00 + 2,
 
-    STORE8:  0x08 + 0,
+    STORE:  0x08 + 0,
     STORE16: 0x08 + 1,
     STORE32: 0x08 + 2,
 
@@ -208,9 +208,9 @@ function assemble(input, offset) {
                 for(let i in v) {
                     codePush(v[i])  
                 }
-                if (v.length == 1) {
-                    codePush(0)
-                }
+                // if (v.length == 1) {
+                //     //codePush(0)
+                // }
             } else {
                 codePush(arguments[i])
                 codePush(arguments[i])
@@ -278,10 +278,10 @@ function assemble(input, offset) {
                             opCode = opcodes[instr];
                             codePush(opCode);
                             break;
-                        case 'LOAD8':
+                        case 'LOAD':
                         case 'LOAD16':
                         case 'LOAD32':
-                        case 'STORE8':
+                        case 'STORE':
                         case 'STORE16':
                         case 'STORE32':
                             addr = getValue(match[op1_group]);
