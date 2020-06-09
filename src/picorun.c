@@ -47,7 +47,7 @@ exit_with_helpmsg:
 		return 1;
 	}
 
-    int ch, addr;
+    int ch;
     FILE *f = fopen(argv[1], "rb");
 	if (!f)
 		goto exit_with_helpmsg;
@@ -58,7 +58,7 @@ exit_with_helpmsg:
 
     coredump(&vm, 64);
 
-    for(int i = 0 ; i < 300 ; i++) {
+    for(int i = 0 ; i < 150 ; i++) {
         if(picovm_exec(&vm))
             break;
         coredump(&vm, 64);

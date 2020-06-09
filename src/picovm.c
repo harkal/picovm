@@ -16,43 +16,26 @@ static inline int16_t signext(uint16_t val, uint16_t mask)
 	return val;
 }
 
-static inline void push_stack_8(struct picovm_s *vm, uint8_t value)
+static inline read_mem(struct picovm_s *vm, uint16_t addr, uint8_t size, void *value)
 {
-    vm->sp -= 2;
-	*(uint8_t *)(vm->mem + vm->sp) = value;
+	memcpy(value, vm->mem + addr, size);
 }
 
-static inline void push_stack_16(struct picovm_s *vm, uint16_t value)
+static inline write_mem(struct picovm_s *vm, uint16_t addr, void *value, uint8_t size)
 {
-    vm->sp -= 2;
-	*(uint16_t *)(vm->mem + vm->sp) = value;
+	memcpy(vm->mem + addr, value, size);
 }
 
-static inline void push_stack_32(struct picovm_s *vm, uint32_t value)
+static inline void push_stack(struct picovm_s *vm, void *value, uint8_t size)
 {
-    vm->sp -= 4;
-	*(uint32_t *)(vm->mem + vm->sp) = value;
+    vm->sp -= size;
+	memcpy(vm->mem + vm->sp, value, size);
 }
 
-static inline uint8_t pop_stack_8(struct picovm_s *vm)
+static inline void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 {
-    uint8_t value = *(uint8_t *)(vm->mem + vm->sp);
-    vm->sp += 1;
-    return value;
-}
-
-static inline uint16_t pop_stack_16(struct picovm_s *vm)
-{
-    uint16_t value =  *(uint16_t *)(vm->mem + vm->sp);
-    vm->sp += 2;
-    return value;
-}
-
-static inline uint32_t pop_stack_32(struct picovm_s *vm)
-{
-    uint32_t value =  *(uint32_t *)(vm->mem + vm->sp);
-    vm->sp += 4;
-    return value;
+	memcpy(value, vm->mem + vm->sp, size);
+	vm->sp += size;
 }
 
 int8_t picovm_exec(struct picovm_s *vm)
@@ -64,20 +47,10 @@ int8_t picovm_exec(struct picovm_s *vm)
         case 0x00 ... 0x00 + 3: // LOAD addr
         {
             uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = opcode & 0x07;
-			switch (size)
-			{
-			case 0:
-				push_stack_8(vm, READ8(addr));	
-				break;
-			case 1:
-				push_stack_16(vm, READ16(addr));	
-				break;
-			case 2:
-				push_stack_32(vm, READ32(addr));
-				break;
-			}
-            
+			uint8_t size = 1 << (opcode & 0x07);
+			uint32_t value;
+			read_mem(vm, addr, size, &value);
+			push_stack(vm, &value, size);            
             vm->ip += 3;
             break;
         }
@@ -85,32 +58,23 @@ int8_t picovm_exec(struct picovm_s *vm)
         case 0x08 ... 0x08 + 3: // STORE addr
         {
 			uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = opcode & 0x07;
-			switch (size)
-			{
-			case 0:
-				WRITE8(addr, pop_stack_8(vm));	
-				break;
-			case 1:
-				WRITE16(addr, pop_stack_16(vm));	
-				break;
-			case 2:
-				WRITE32(addr, pop_stack_32(vm));
-				break;
-			}            
+			uint8_t size = 1 << (opcode & 0x07);
+			uint32_t value;
+			pop_stack(vm, size, &value);
+			write_mem(vm, addr, &value, size);
             vm->ip += 3;
             break;
         }
 
 		case 0x80+0 ... 0x80+14:
-			b = pop_stack_32(vm);
-			a = pop_stack_32(vm);
+			pop_stack(vm, 4, &b);
+			pop_stack(vm, 4, &a);
 			switch (opcode)
 			{
-				case 0x80 +  0: push_stack_32(vm, a + b);  break;
-				case 0x80 +  1: push_stack_32(vm, a - b);  break;
-				case 0x80 +  2: push_stack_32(vm, a * b);  break;
-				case 0x80 +  3: push_stack_32(vm, a / b);  break;
+				case 0x80 +  0: a += b; break;
+				case 0x80 +  1: a -= b; break;
+				case 0x80 +  2: a *= b; break;
+				case 0x80 +  3: a /= b; break;
 				// case 0x80 +  4: push_stack_32(vm, a % b);  break;
 				// case 0x80 +  5: push_stack_32(vm, a << b); break;
 				// case 0x80 +  6: push_stack_32(vm, a >> b); break;
@@ -123,6 +87,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 				// case 0x80 + 13: push_stack_32(vm, -a);     break;
 				// case 0x80 + 14: push_stack_32(vm, !a);     break;
 			}
+			push_stack(vm, &a, 4);
 			vm->ip++;
 			break;
 		// JMP addr
@@ -143,7 +108,8 @@ int8_t picovm_exec(struct picovm_s *vm)
 				break;
 			}
 
-			int32_t top = pop_stack_32(vm);
+			int32_t top;
+			pop_stack(vm, 4, &top);
 
 			printf("%d, t: %d\n", top, jump_type);
 
