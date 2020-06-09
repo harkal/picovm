@@ -1,4 +1,5 @@
 #include <memory.h>
+#include "config.h"
 #include "picovm.h"
 
 // #include <stddef.h>
@@ -23,16 +24,13 @@ static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 int8_t picovm_exec(struct picovm_s *vm)
 {
     uint8_t opcode = READ8(vm->ip);
-    uint32_t a, b, addr;
-
-	struct { float b, a; } fops;
+	uint8_t size = 1 << (opcode & 0x02);
 
     switch (opcode)
 	{
         case 0x00 ... 0x00 + 3: // LOAD addr
         {
             uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = 1 << (opcode & 0x02);
 			vm->sp -= size;
 			memcpy(vm->sp, vm->mem + addr, size);
             vm->ip += 3;
@@ -42,7 +40,6 @@ int8_t picovm_exec(struct picovm_s *vm)
         case 0x08 ... 0x08 + 3: // STORE addr
         {
 			uint16_t addr = READ16(vm->ip + 1);
-			uint8_t size = 1 << (opcode & 0x02);
 			memcpy(vm->mem + addr, vm->sp, size);
 			vm->sp += size;
             vm->ip += 3;
@@ -51,7 +48,6 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 		case 0x10 ... 0x10 + 3: // POP
         {
-			uint8_t size = 1 << (opcode & 0x02);
 			vm->sp += size;
             vm->ip += 1;
             break;
@@ -60,7 +56,6 @@ int8_t picovm_exec(struct picovm_s *vm)
 		case 0x14 ... 0x14 + 9: // DUP
         {
 			uint8_t k = (opcode & 0xc) >> 2;
-			uint8_t size = 1 << (opcode & 0x02);
 
 			vm->sp -= size;
 			memcpy(vm->sp, vm->sp + size, k * size);
@@ -72,8 +67,8 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 		case 0x80+0 ... 0x80+43:
 		{
+			uint32_t a, b;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
-			uint8_t size = 1 << (opcode & 0x02);
 			if (cmd != 7) {
 				pop_stack(vm, size, &b);
 			}
@@ -101,8 +96,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 			vm->ip++;
 			break;
 		}
+#ifdef INCLUDE_FLOATING_POINT_INSTRUCTIONS
 		case 0xac ... 0xac + 4:
 		{
+			struct { float b, a; } fops;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
 			
 			memcpy(&fops, vm->sp, sizeof(float) * 2);
@@ -119,9 +116,12 @@ int8_t picovm_exec(struct picovm_s *vm)
 			vm->ip++;
 			break;
 		}
+#endif
 		// JMP addr
 		case 0xc0 ... 0xc0+16:
-		{
+		{			
+			uint32_t addr;
+
 			// Get jump address
 			if ((opcode & 1) == 0) {
 				addr = vm->ip + (int8_t)READ8(vm->ip+1);

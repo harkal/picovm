@@ -1,5 +1,5 @@
 CC = llvm-gcc
-#CFLAGS +=  -Wall -Wextra -Og -glldb
+# CFLAGS +=  -Wall -Wextra -Og -glldb
 CFLAGS += -MD -Wall -Wextra -Os
 
 all: picorun
