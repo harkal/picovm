@@ -11,12 +11,12 @@
 static void push_stack(struct picovm_s *vm, void *value, uint8_t size)
 {
     vm->sp -= size;
-	memcpy(vm->mem + vm->sp, value, size);
+	memcpy(vm->sp, value, size);
 }
 
 static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 {
-	memcpy(value, vm->mem + vm->sp, size);
+	memcpy(value, vm->sp, size);
 	vm->sp += size;
 }
 
@@ -34,7 +34,7 @@ int8_t picovm_exec(struct picovm_s *vm)
             uint16_t addr = READ16(vm->ip + 1);
 			uint8_t size = 1 << (opcode & 0x02);
 			vm->sp -= size;
-			memcpy(vm->mem + vm->sp, vm->mem + addr, size);
+			memcpy(vm->sp, vm->mem + addr, size);
             vm->ip += 3;
             break;
         }
@@ -43,7 +43,7 @@ int8_t picovm_exec(struct picovm_s *vm)
         {
 			uint16_t addr = READ16(vm->ip + 1);
 			uint8_t size = 1 << (opcode & 0x02);
-			memcpy(vm->mem + addr, vm->mem + vm->sp, size);
+			memcpy(vm->mem + addr, vm->sp, size);
 			vm->sp += size;
             vm->ip += 3;
             break;
@@ -63,8 +63,8 @@ int8_t picovm_exec(struct picovm_s *vm)
 			uint8_t size = 1 << (opcode & 0x02);
 
 			vm->sp -= size;
-			memcpy(vm->mem + vm->sp, vm->mem + vm->sp + size, k * size);
-			memcpy(vm->mem + vm->sp + k * size, vm->mem + vm->sp, size);
+			memcpy(vm->sp, vm->sp + size, k * size);
+			memcpy(vm->sp + k * size, vm->sp, size);
 
             vm->ip += 1;
             break;
@@ -105,7 +105,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 		{
 			uint8_t cmd = (opcode & 0x3c) >> 2;
 			
-			memcpy(&fops, vm->mem + vm->sp, sizeof(float) * 2);
+			memcpy(&fops, vm->sp, sizeof(float) * 2);
 			vm->sp += sizeof(float) * 2;
 			switch (cmd)
 			{

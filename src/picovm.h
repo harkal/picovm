@@ -13,7 +13,8 @@ extern "C" {
 
 struct picovm_s
 {
-	uint16_t ip, sp;
+	uint16_t ip;
+    uint8_t *sp;
     uint8_t flags;
 	void *mem;
 };

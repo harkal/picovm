@@ -21,7 +21,7 @@ void coredump(struct picovm_s *vm, uint16_t size)
         if (i == vm->ip) {
             printf("^^-- IP ");
             i += 3;
-        } else if (i == vm->sp) {
+        } else if (i == (vm->sp - (uint8_t *)vm->mem)) {
             printf("^^-- SP");
         } else {
             printf("  ");
@@ -37,7 +37,7 @@ int main(int argc UNUSED, char **argv UNUSED)
     memset(vm_memory, 0, 64);
 
     struct picovm_s vm = {
-	    0, 64, 0,
+	    0, &vm_memory[0] + 64, 0,
         &vm_memory
     };
 
