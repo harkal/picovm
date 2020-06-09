@@ -15,6 +15,14 @@ var opcodes = {
     STORE16: 0x08 + 1,
     STORE32: 0x08 + 2,
 
+    POP: 0x10 + 0,
+    POP16: 0x10 + 1,
+    POP32: 0x10 + 2,
+
+    DUP: 0x10 + 0,
+    DUP16: 0x10 + 1,
+    DUP32: 0x10 + 2,
+
     ADD: OP_BASE + (0x0 << 2),
     SUB: OP_BASE + (0x1 << 2),
     MUL: OP_BASE + (0x2 << 2),
@@ -274,9 +282,30 @@ function assemble(input, offset) {
                         case 'SUBF':
                         case 'MULF':
                         case 'DIVF':
+                        case 'POP':
+                        case 'POP16':
+                        case 'POP32':
                             checkNoExtraArg(instr, match[op1_group]);
                             opCode = opcodes[instr];
                             codePush(opCode);
+                            break;
+                        case 'DUP':
+                        case 'DUP16':
+                        case 'DUP32':
+                            var K
+                            if(match[op1_group] == undefined) {
+                                K = { type: 'number', value: 1 }
+                            } else {
+                                K = getValue(match[op1_group]);
+                            }
+                            checkNoExtraArg(instr, match[op2_group]);
+                            if (K.type !== 'number') {
+                                throw `${instr} does not support this operands`;
+                            }
+                            if (K.value < 1 || K.value > 3) {
+                                throw `${instr} depth can range from 1 - 3`;
+                            }
+                            codePush(opcodes[instr] | (K.value << 2));
                             break;
                         case 'LOAD':
                         case 'LOAD16':
