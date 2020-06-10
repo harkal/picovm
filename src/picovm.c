@@ -112,11 +112,28 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 14: if (fops.b != 0.0f)fops.a /= fops.b; else fops.a = 0.0f; break;
 			}
 
+			vm->flags = fops.a == 0.0f ? PICOVM_FLAG_Z : 0;
+			if (fops.a < 0.0f) vm->flags |= PICOVM_FLAG_N;
+			
 			push_stack(vm, &fops.a, sizeof(float));
 			vm->ip++;
 			break;
 		}
 #endif
+		case 0xbc:
+		{
+			float f_value = *(float *)(vm->sp);
+			*(uint32_t *)(vm->sp) = f_value;
+			vm->ip++;
+			break;
+		}
+		case 0xbc + 1:
+		{
+			uint32_t i_value = *(uint32_t *)(vm->sp);
+			*(float *)(vm->sp) = i_value;
+			vm->ip++;
+			break;
+		}
 		// JMP addr
 		case 0xc0 ... 0xc0+16:
 		{			

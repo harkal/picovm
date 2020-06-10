@@ -57,12 +57,14 @@ exit_with_helpmsg:
 	fclose(f);
 
     coredump(&vm, 64);
-
-    for(int i = 0 ; i < 150 ; i++) {
+    int i;
+    for(i = 0 ; i < 150 ; i++) {
         if(picovm_exec(&vm))
             break;
         coredump(&vm, 64);
     }
+
+    printf("Executed %d instructions", i);
 
     return 0;
 }

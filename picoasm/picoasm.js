@@ -40,6 +40,8 @@ var opcodes = {
     MULF: OP_BASE + (0xD << 2),
     DIVF: OP_BASE + (0xE << 2),
 
+    CONV: 0xBC,
+
     JMP_REL_BYTE : JMP_BASE,
     JMP_REL_SHORT: JMP_BASE + 1,
 
@@ -367,6 +369,14 @@ function assemble(input, offset) {
                             checkNoExtraArg(instr, match[op1_group]);
                             codePush(opcodes[cmd] + mod);
                             break;
+                        case 'CONVI':
+                        case 'CONVF':
+                            checkNoExtraArg(instr, match[op1_group]);
+                            var modifier = 0
+                            if (instr === 'CONVF')
+                                modifier = 1
+                            codePush(opcodes.CONV + modifier)
+                            break
                         case 'INC':
                             p1 = getValue(match[op1_group]);
                             checkNoExtraArg('INC', match[op2_group]);
