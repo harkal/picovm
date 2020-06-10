@@ -75,11 +75,12 @@ function isNumber(s) {
 }
 
 function assemble(input, offset) {
-    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,7}))?(?:[\t ]*(\[?([.a-z0-9]*)[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
+    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,7}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
-    var op1_group = 4
-    var offset_group = 5
+    var bracket_group = 4
+    var op1_group = 5
+    var offset_group = 6
 
     // MATCHES: '(+|-)INTEGER'
     var regexNum = /^[-+]?[0-9]+$/;
@@ -119,26 +120,26 @@ function assemble(input, offset) {
             throw 'Invalid number format';
     }
 
-    var parseLabelOrNumber = function (input, typeNumber) {
+    var parseLabelOrNumber = function (input) {
         var label = parseLabel(input);
 
         if (label !== undefined) {
-            return {type: typeNumber, value: label};
+            return {type: 'label', value: label};
         } else if (input.slice(0,2) === '0x') {
             var v = []
             for(let i = input.length - 2 ; i >= 2 ; i-=2) {
                 v.push(parseInt(input.slice(i,i+2), 16))
             }
-            return {type: typeNumber, value: v}
+            return {type: 'number', value: v}
         } else {
             var value = parseNumber(input);
 
             if (isNaN(value))
                 throw 'Not a ' + typeNumber + ': ' + value;
             else if (value < 0 || value > 65535)
-                throw typeNumber + ' must have a value between 0 and 65535';
+                throw 'number must have a value between 0 and 65535';
 
-            return {type: typeNumber, value: value}
+            return {type: 'number', value: value}
         }
     }
 
@@ -150,7 +151,7 @@ function assemble(input, offset) {
         switch (input.slice(0, 1)) {
             case '[': 
                 var address = input.slice(1, input.length - 1);
-                return parseLabelOrNumber(address, 'address');
+                return parseLabelOrNumber(address);
             case '"': // "String"
                 var text = input.slice(1, input.length - 1);
                 var chars = [];
@@ -167,7 +168,7 @@ function assemble(input, offset) {
 
                 return {type: 'number', value: character.charCodeAt(0)};
             default: // REGISTER, NUMBER or LABEL
-                return parseLabelOrNumber(input, 'number');
+                return parseLabelOrNumber(input);
         }
     }
 
@@ -310,20 +311,48 @@ function assemble(input, offset) {
                         case 'STORE':
                         case 'STORE16':
                         case 'STORE32':
+                            var size = instr.slice(instr.length-2, instr.length)
                             if(match[op1_group] != undefined) {
                                 addr = getValue(match[op1_group]);
+                                if (addr.type == 'label') {
+                                    if (size != '16' && match[bracket_group] == undefined)
+                                        throw 'Imediate label loading only with 16bit load'
+                                    var offset = 0
+                                    if (match[offset_group] != undefined) {
+                                        offset = parseNumber(match[offset_group])
+                                    }
+                                    
+                                    codePush(opcodes[instr])
+                                    codePush(offset)
+                                    codePush(addr.value)
+                                } else if (addr.type == 'number') {
+                                    if(match[bracket_group] != undefined) {
+                                        codePush(opcodes[instr] | 0x4)
+                                        codePush(addr.value)
+                                    } else {
+                                        codePush(opcodes[instr] | 0xC)
+                                        if (size == '32') {
+                                            var v = addr.value
+                                            codePush(v & 0xff)
+                                            v >>= 8
+                                            codePush(v & 0xff)
+                                            v >>= 8
+                                            codePush(v & 0xff)
+                                            v >>= 8
+                                            codePush(v & 0xff)
+                                        } else if (size == '16') {
+                                            codePush(addr.value & 0xff)
+                                            codePush(addr.value >> 8)
+                                        } else {
+                                            codePush(addr.value & 0xff)
+                                        }
+                                    }
+                                } else {
+                                    throw `${instr} does not support this operands`;
+                                }
+                            } else {
+                                codePush(opcodes[instr] | 0x8)
                             }
-                            if (addr.type !== 'number') {
-                                throw `${instr} does not support this operands`;
-                            }
-                            var offset = 0
-                            if (match[offset_group] != undefined) {
-                                offset = parseNumber(match[offset_group])
-                            }
-                            
-                            codePush(opcodes[instr])
-                            codePush(offset)
-                            codePush(addr.value)
                             break;
                         case 'ADD':
                         case 'SUB':
@@ -388,7 +417,7 @@ function assemble(input, offset) {
                         case 'JLE':
                                 p1 = getValue(decorateLabel(match[op1_group]));
                                 
-                                if (p1.type !== 'number')
+                                if (p1.type !== 'label')
                                     throw `${instr} does not support this operands`;
                                 
                                 codePush(opcodes[`${instr}_REL_SHORT`]);

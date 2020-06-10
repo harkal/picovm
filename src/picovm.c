@@ -24,36 +24,117 @@ static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 int8_t picovm_exec(struct picovm_s *vm)
 {
     uint8_t opcode = READ8(vm->ip);
-	uint8_t size = 1 << (opcode & 0x02);
+	uint8_t size = 1 << (opcode & 0x03);
 
     switch (opcode)
 	{
-        case 0x00 ... 0x00 + 3: // LOAD addr
+        case 0x00 ... 0x00 + 15: // LOAD addr
         {
-            uint16_t addr = READ16(vm->ip + 1);
-			vm->sp -= size;
-			memcpy(vm->sp, vm->mem + addr, size);
-            vm->ip += 3;
+			uint8_t cmd = (opcode & 0xc) >> 2;
+
+			switch (cmd)
+			{
+				case 0:
+				{
+					uint16_t addr = READ16(vm->ip + 1);
+					vm->sp -= size;
+					memcpy(vm->sp, vm->mem + addr, size);
+					vm->ip += 3;	
+					break;
+				}
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
+				case 1:
+				{
+					uint8_t offset = READ8(vm->ip + 1);
+					uint16_t addr;
+					memcpy(&addr, vm->sp, sizeof(uint16_t));
+					vm->sp += sizeof(uint16_t);
+					vm->sp -= size;
+					memcpy(vm->sp, vm->mem + addr + offset, size);
+					vm->ip += 2;
+					break;
+				}
+#endif
+				case 2:
+				{
+					struct {
+						int16_t offset;
+						uint16_t addr;
+					} data;
+
+					memcpy(&data, vm->sp, sizeof(uint16_t) * 2);
+					vm->sp += sizeof(uint16_t) * 2;
+					vm->sp -= size;
+					memcpy(vm->sp, vm->mem + data.addr + data.offset, size);
+					vm->ip += 1;
+					break;
+				}
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
+				case 3:
+				{
+					vm->sp -= size;
+					memcpy(vm->sp, vm->mem + vm->ip + 1, size);
+					vm->ip += 1 + size;	
+					break;
+				}
+#endif
+			}
+            
             break;
         }
 		
-        case 0x08 ... 0x08 + 3: // STORE addr
+        case 0x10 ... 0x10 + 15: // STORE addr
         {
-			uint16_t addr = READ16(vm->ip + 1);
-			memcpy(vm->mem + addr, vm->sp, size);
-			vm->sp += size;
-            vm->ip += 3;
+			uint8_t cmd = (opcode & 0xc) >> 2;
+
+			switch (cmd)
+			{
+				case 0:
+				{
+					uint16_t addr = READ16(vm->ip + 1);
+					memcpy(vm->mem + addr, vm->sp, size);
+					vm->sp += size;
+					vm->ip += 3;
+					break;
+				}
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
+				case 1:
+				{
+					uint8_t offset = READ8(vm->ip + 1);
+					uint16_t addr;
+					memcpy(&addr, vm->sp + size, 2);
+					memcpy(vm->mem + addr + offset, vm->sp, size);
+					vm->sp += size + 2;
+					vm->ip += 2;
+					break;
+				}
+#endif
+				case 2:
+				{
+					struct {
+						int16_t offset;
+						uint16_t addr;
+					} data;
+
+					memcpy(&data, vm->sp + size, sizeof(uint16_t)*2);
+					memcpy(vm->mem + data.addr + data.offset, vm->sp, size);
+					vm->sp += size + sizeof(uint16_t)*2;
+					vm->ip += 1;
+					break;
+				}
+			}
+            
             break;
         }
 
-		case 0x10 ... 0x10 + 3: // POP
+		case 0x20 ... 0x20 + 3: // POP
         {
 			vm->sp += size;
             vm->ip += 1;
             break;
         }
 
-		case 0x14 ... 0x14 + 9: // DUP
+		case 0x24 ... 0x24 + 9: // DUP
         {
 			uint8_t k = (opcode & 0xc) >> 2;
 
@@ -65,7 +146,7 @@ int8_t picovm_exec(struct picovm_s *vm)
             break;
         }
 
-		case 0x80+0 ... 0x80+43:
+		case 0x80+0 ... 0x80+43: // ARITHMETIC OPERATIONS
 		{
 			uint32_t a, b;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
@@ -97,7 +178,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 			break;
 		}
 #ifdef INCLUDE_FLOATING_POINT_INSTRUCTIONS
-		case 0xac ... 0xac + 4:
+		case 0xac ... 0xac + 4: // FLOATING POINT OPERATIONS
 		{
 			struct { float b, a; } fops;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
@@ -119,23 +200,23 @@ int8_t picovm_exec(struct picovm_s *vm)
 			vm->ip++;
 			break;
 		}
-#endif
-		case 0xbc:
+		case 0xbc: // CONVI
 		{
 			float f_value = *(float *)(vm->sp);
 			*(uint32_t *)(vm->sp) = f_value;
 			vm->ip++;
 			break;
 		}
-		case 0xbc + 1:
+		case 0xbc + 1: // CONVF
 		{
 			uint32_t i_value = *(uint32_t *)(vm->sp);
 			*(float *)(vm->sp) = i_value;
 			vm->ip++;
 			break;
 		}
+#endif
 		// JMP addr
-		case 0xc0 ... 0xc0+16:
+		case 0xc0 ... 0xc0+16: // Branching
 		{			
 			uint32_t addr;
 
@@ -161,26 +242,32 @@ int8_t picovm_exec(struct picovm_s *vm)
 				if (flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 2:
 				if (~flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
+#endif
 			case 3:
 				if (flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 4:
 				if (~flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
+#endif
 			case 5:
 				if ( (flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 6:
 				if ( ~(flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
+#endif
 			}
 			break;
 			
