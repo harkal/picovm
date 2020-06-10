@@ -1,0 +1,7 @@
+#ifndef __CONFIG_H_
+#define __CONFIG_H_
+
+#define INCLUDE_FLOATING_POINT_INSTRUCTIONS 
+#define INCLUDE_OPTIONAL_INSTRUCTIONS
+
+#endif
