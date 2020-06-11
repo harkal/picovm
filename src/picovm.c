@@ -83,7 +83,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 					vm->ip += 1;
 					break;
 				}
-#ifndef INCLUDE_OPTIONAL_INSTRUCTIONS
+#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 				case 3:
 				{
 					vm->sp -= size;
@@ -194,6 +194,14 @@ int8_t picovm_exec(struct picovm_s *vm)
 		{
 			memcpy(&vm->ip, vm->sp, 2);
 			vm->sp += 2;
+			break;
+		}
+		case 0x43: // CALLUSER
+		{
+			if(vm->call_user) {
+				vm->call_user(vm->ctx);
+			}
+			vm->ip += 1;
 			break;
 		}
 		case 0x80+0 ... 0x80+43: // ARITHMETIC OPERATIONS

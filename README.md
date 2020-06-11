@@ -1,4 +1,4 @@
- picoVM - Stack based Virtual Machine for embedded devices
+ picoVM - Virtual Machine for embedded devices
 ==========================================================
 
 picoVM is a fully featured, minimal footprint, VM for embedded devices.
@@ -33,6 +33,13 @@ Dependencies
 ------------
 
 None.
+
+Building
+--------
+
+Type:
+
+```make```
 
 Licensing
 ---------

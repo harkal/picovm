@@ -1,7 +1,7 @@
-CC = llvm-gcc
-# CC = arm-none-eabi-gcc
+# CC = llvm-gcc
+CC = arm-none-eabi-gcc
 # CFLAGS +=  -Wall -Wextra -Og -glldb
-CFLAGS += -MD -Wall -Wextra -Os
+CFLAGS += -MD -Wall -Wextra -Os -mthumb -march=armv7-m 
 
 all: picorun
 
