@@ -1,3 +1,7 @@
+;
+;  Hello world example in picoVM assembly
+;
+
 loop:       LOAD16 message      ; load the message address
             LOAD16 [idx]        ; load the index
             LOAD                ; using the loaded address and index load the char

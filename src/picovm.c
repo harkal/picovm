@@ -49,6 +49,16 @@ static void update_flags(struct picovm_s *vm, uint8_t size)
 	}
 }
 
+static uint8_t __attribute__ ((noinline)) get_k(struct picovm_s *vm, uint8_t opcode)
+{
+	uint8_t k = (opcode & 0xc) >> 2;
+	if (k == 3) {
+		k = (uint8_t)READ8(vm->ip+1);
+		vm->ip += 1;
+	}
+	return k;
+}
+
 int8_t picovm_exec(struct picovm_s *vm)
 {
 	uint16_t addr = 0;
@@ -166,11 +176,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 		case 0x20 ... 0x20 + 15: // DUP
         {
-			uint8_t k = (opcode & 0xc) >> 2;
-			if (k == 3) {
-				k = (uint8_t)READ8(vm->ip+1);
-				vm->ip += 1;
-			}
+			uint8_t k = get_k(vm, opcode);
 
 			vm->sp -= size;
 			memcpy(vm->sp, vm->sp + size, k + size);
@@ -182,14 +188,11 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 		case 0x30 ... 0x30 + 15: // DIG
         {
-			uint8_t k = (opcode & 0xc) >> 2;
-			if (k == 3) {
-				k = (uint8_t)READ8(vm->ip+1);
-				vm->ip += 1;
-			}
+			uint8_t k = get_k(vm, opcode);
 
 			vm->sp -= size;
 			MEMCPY_SIZE(vm->sp, vm->sp + size + k);
+			update_flags(vm, size);
 
             vm->ip += 1;
             break;
