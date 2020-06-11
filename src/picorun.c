@@ -58,7 +58,7 @@ exit_with_helpmsg:
 
     coredump(&vm, 64);
     int i;
-    for(i = 0 ; i < 5 ; i++) {
+    for(i = 0 ; i < 50 ; i++) {
         if(picovm_exec(&vm))
             break;
         coredump(&vm, 64);

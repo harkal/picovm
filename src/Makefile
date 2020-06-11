@@ -1,4 +1,5 @@
 CC = llvm-gcc
+# CC = arm-none-eabi-gcc
 # CFLAGS +=  -Wall -Wextra -Og -glldb
 CFLAGS += -MD -Wall -Wextra -Os
 
