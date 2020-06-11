@@ -1,4 +1,4 @@
-ARCH := x86
+ARCH := armv7
 
 CFLAGS += -Wall -Wextra
 
@@ -27,6 +27,9 @@ pico: picorun.o picovm.o
 else
 pico:
 endif
+
+measure: picovm.o
+	size picovm.o
 
 .PHONY: clean
 clean:
