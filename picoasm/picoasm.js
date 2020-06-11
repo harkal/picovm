@@ -83,11 +83,11 @@ function isNumber(s) {
 }
 
 function assemble(input, offset) {
-    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
+    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?(?:".*")?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
     var bracket_group = 4
-    var op1_group = 5
+    var op1_group = 3
     var offset_group = 6
 
     // MATCHES: '(+|-)INTEGER'
@@ -276,7 +276,7 @@ function assemble(input, offset) {
                         case 'DB':
                             p1 = getValue(match[op1_group]);
 
-                            if (p1.type === 'number')
+                            if (p1.type === 'number' || p1.type === 'numbers')
                                 codePushOperands(p1.value)
                             else
                                 throw 'DB does not support this operand';
@@ -564,14 +564,15 @@ function assemble(input, offset) {
 }
 
 let asmFile = fs.readFileSync(process.argv[2], 'utf-8')
-
+let outFile = process.argv[3]
+if (!outFile)outFile = 'out.hex'
 try {
     var asm = assemble(asmFile, 0)
 
     console.log(asm.labels)
 
     var buf = new Buffer(asm.code, 'binary');
-    fs.writeFileSync('out.hex', buf);
+    fs.writeFileSync(outFile, buf);
 } catch (err) {
     console.log(err)
 }
