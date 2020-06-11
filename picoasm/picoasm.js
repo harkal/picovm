@@ -15,13 +15,17 @@ var opcodes = {
     STORE16: 0x10 + 1,
     STORE32: 0x10 + 2,
 
-    POP: 0x20 + 0,
-    POP16: 0x20 + 1,
-    POP32: 0x20 + 2,
+    POP: 0x1c + 0,
+    POP16: 0x1c + 1,
+    POP32: 0x1c + 2,
 
     DUP: 0x20 + 0,
     DUP16: 0x20 + 1,
     DUP32: 0x20 + 2,
+
+    DIG: 0x30 + 0,
+    DIG16: 0x30 + 1,
+    DIG32: 0x30 + 2,
 
     ADD: OP_BASE + (0x0 << 2),
     SUB: OP_BASE + (0x1 << 2),
@@ -41,6 +45,9 @@ var opcodes = {
     DIVF: OP_BASE + (0xE << 2),
 
     CONV: 0xBC,
+
+    CALL: 0x40,
+    RET: 0x42,
 
     JMP_REL_BYTE : JMP_BASE,
     JMP_REL_SHORT: JMP_BASE + 1,
@@ -284,6 +291,7 @@ function assemble(input, offset) {
                         case 'POP':
                         case 'POP16':
                         case 'POP32':
+                        case 'RET':
                             checkNoExtraArg(instr, match[op1_group]);
                             opCode = opcodes[instr];
                             codePush(opCode);
@@ -291,19 +299,27 @@ function assemble(input, offset) {
                         case 'DUP':
                         case 'DUP16':
                         case 'DUP32':
+                        case 'DIG':
+                        case 'DIG16':
+                        case 'DIG32':
                             var K
                             if(match[op1_group] == undefined) {
-                                K = { type: 'number', value: 1 }
+                                K = { type: 'number', value: 0 }
                             } else {
                                 K = getValue(match[op1_group]);
                             }
                             if (K.type !== 'number') {
                                 throw `${instr} does not support this operands`;
                             }
-                            if (K.value < 1 || K.value > 3) {
-                                throw `${instr} depth can range from 1 - 3`;
+                            if (K.value < 0 || K.value > 255) {
+                                throw `${instr} depth can range from 0 - 255`;
                             }
-                            codePush(opcodes[instr] | (K.value << 2));
+                            if (K.value <= 3) {
+                                codePush(opcodes[instr] | ((K.value) << 2));
+                            } else {
+                                codePush(opcodes[instr] | (0x3 << 2) )
+                                codePush(K.value)
+                            }
                             break;
                         case 'LOAD':
                         case 'LOAD16':
@@ -322,7 +338,10 @@ function assemble(input, offset) {
                                         offset = parseNumber(match[offset_group])
                                     }
                                     
-                                    codePush(opcodes[instr])
+                                    if (match[bracket_group] == undefined)
+                                        codePush(opcodes[instr] | (0x3 << 2))
+                                    else
+                                        codePush(opcodes[instr])
                                     codePush(offset)
                                     codePush(addr.value)
                                 } else if (addr.type == 'number') {
@@ -424,22 +443,17 @@ function assemble(input, offset) {
                                 codePushOperands('^' + p1.value);
                                 break;
                         case 'CALL':
-                            p1 = getValue(match[op1_group]);
-
-                            if (p1.type === 'register')
-                                opCode = opcodes.CALL_REGADDRESS;
-                            else if (p1.type === 'number')
-                                opCode = opcodes.CALL_ADDRESS;
-                            else
-                                throw 'CALL does not support this operand';
-
-                            codePush(opCode);
-                            codePushOperands(p1.value);
-                            break;
-                        case 'RET':
-                            checkNoExtraArg(instr, match[op1_group]);
-                            opCode = opcodes.RET;
-                            codePush(opCode);
+                            if(match[op1_group] != undefined) {
+                                p1 = getValue(decorateLabel(match[op1_group]));
+                                    
+                                if (p1.type !== 'label')
+                                    throw `${instr} does not support this operands`;
+                                
+                                codePush(opcodes[instr]);
+                                codePushOperands(p1.value);
+                            } else {
+                                codePush(opcodes[instr] | 0x1);
+                            }
                             break;
                         case 'INT':
                             p1 = getValue(match[op1_group]);

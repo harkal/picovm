@@ -2,12 +2,25 @@
 #include "config.h"
 #include "picovm.h"
 
-// #include <stddef.h>
-// void *memcpy(void *__restrict, const void *__restrict, size_t);
+#if USE_SINGLE_DATA_TYPE == 8
+	#define SINGLE_DATA_TYPE uint8_t
+#elif USE_SINGLE_DATA_TYPE == 16
+	#define SINGLE_DATA_TYPE uint16_t
+#elif USE_SINGLE_DATA_TYPE == 32
+	#define SINGLE_DATA_TYPE uint32_t
+#else
+	#undef SINGLE_DATA_TYPE
+#endif
 
 #define READ8(x)  (*(uint8_t *)(vm->mem + (x)))
 #define READ16(x) (*(uint16_t *)(vm->mem + (x)))
 #define READ32(x) (*(uint32_t *)(vm->mem + (x)))
+
+#ifdef SINGLE_DATA_TYPE
+	#define MEMCPY_SIZE(d, s) *(SINGLE_DATA_TYPE *)(d) = *(SINGLE_DATA_TYPE *)(s)
+#else
+	#define MEMCPY_SIZE(d, s) memcpy((d), (s), size)
+#endif
 
 static void push_stack(struct picovm_s *vm, void *value, uint8_t size)
 {
@@ -23,7 +36,9 @@ static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 
 int8_t picovm_exec(struct picovm_s *vm)
 {
+	uint16_t addr = 0;
     uint8_t opcode = READ8(vm->ip);
+
 	uint8_t size = 1 << (opcode & 0x03);
 
     switch (opcode)
@@ -36,9 +51,9 @@ int8_t picovm_exec(struct picovm_s *vm)
 			{
 				case 0:
 				{
-					uint16_t addr = READ16(vm->ip + 1);
+					addr = READ16(vm->ip + 1);
 					vm->sp -= size;
-					memcpy(vm->sp, vm->mem + addr, size);
+					MEMCPY_SIZE(vm->sp, vm->mem + addr);
 					vm->ip += 3;	
 					break;
 				}
@@ -46,11 +61,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 1:
 				{
 					uint8_t offset = READ8(vm->ip + 1);
-					uint16_t addr;
 					memcpy(&addr, vm->sp, sizeof(uint16_t));
 					vm->sp += sizeof(uint16_t);
 					vm->sp -= size;
-					memcpy(vm->sp, vm->mem + addr + offset, size);
+					MEMCPY_SIZE(vm->sp, vm->mem + addr + offset);
 					vm->ip += 2;
 					break;
 				}
@@ -65,7 +79,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 					memcpy(&data, vm->sp, sizeof(uint16_t) * 2);
 					vm->sp += sizeof(uint16_t) * 2;
 					vm->sp -= size;
-					memcpy(vm->sp, vm->mem + data.addr + data.offset, size);
+					MEMCPY_SIZE(vm->sp, vm->mem + data.addr + data.offset);
 					vm->ip += 1;
 					break;
 				}
@@ -73,7 +87,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 3:
 				{
 					vm->sp -= size;
-					memcpy(vm->sp, vm->mem + vm->ip + 1, size);
+					MEMCPY_SIZE(vm->sp, vm->mem + vm->ip + 1);
 					vm->ip += 1 + size;	
 					break;
 				}
@@ -83,7 +97,7 @@ int8_t picovm_exec(struct picovm_s *vm)
             break;
         }
 		
-        case 0x10 ... 0x10 + 15: // STORE addr
+        case 0x10 ... 0x10 + 9: // STORE addr
         {
 			uint8_t cmd = (opcode & 0xc) >> 2;
 
@@ -91,8 +105,8 @@ int8_t picovm_exec(struct picovm_s *vm)
 			{
 				case 0:
 				{
-					uint16_t addr = READ16(vm->ip + 1);
-					memcpy(vm->mem + addr, vm->sp, size);
+					addr = READ16(vm->ip + 1);
+					MEMCPY_SIZE(vm->mem + addr, vm->sp);
 					vm->sp += size;
 					vm->ip += 3;
 					break;
@@ -101,9 +115,8 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 1:
 				{
 					uint8_t offset = READ8(vm->ip + 1);
-					uint16_t addr;
 					memcpy(&addr, vm->sp + size, 2);
-					memcpy(vm->mem + addr + offset, vm->sp, size);
+					MEMCPY_SIZE(vm->mem + addr + offset, vm->sp);
 					vm->sp += size + 2;
 					vm->ip += 2;
 					break;
@@ -117,7 +130,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 					} data;
 
 					memcpy(&data, vm->sp + size, sizeof(uint16_t)*2);
-					memcpy(vm->mem + data.addr + data.offset, vm->sp, size);
+					MEMCPY_SIZE(vm->mem + data.addr + data.offset, vm->sp);
 					vm->sp += size + sizeof(uint16_t)*2;
 					vm->ip += 1;
 					break;
@@ -127,25 +140,62 @@ int8_t picovm_exec(struct picovm_s *vm)
             break;
         }
 
-		case 0x20 ... 0x20 + 3: // POP
+		case 0x1c ... 0x1c + 3: // POP
         {
 			vm->sp += size;
             vm->ip += 1;
             break;
         }
 
-		case 0x24 ... 0x24 + 9: // DUP
+		case 0x20 ... 0x20 + 15: // DUP
         {
 			uint8_t k = (opcode & 0xc) >> 2;
+			if (k == 3) {
+				k = (uint8_t)READ8(vm->ip+1);
+				vm->ip += 1;
+			}
 
 			vm->sp -= size;
-			memcpy(vm->sp, vm->sp + size, k * size);
-			memcpy(vm->sp + k * size, vm->sp, size);
+			memcpy(vm->sp, vm->sp + size, k + size);
+			MEMCPY_SIZE(vm->sp + size + k, vm->sp);
 
             vm->ip += 1;
             break;
         }
 
+		case 0x30 ... 0x30 + 15: // DIG
+        {
+			uint8_t k = (opcode & 0xc) >> 2;
+			if (k == 3) {
+				k = (uint8_t)READ8(vm->ip+1);
+				vm->ip += 1;
+			}
+
+			vm->sp -= size;
+			MEMCPY_SIZE(vm->sp, vm->sp + size + k);
+
+            vm->ip += 1;
+            break;
+        }
+
+		case 0x40: // CALL
+			addr = (int16_t)READ16(vm->ip+1);
+			vm->ip += 3;
+			if (0) {
+		case 0x41: // CALL [ref]
+				memcpy(&addr, vm->sp, 2);
+				vm->sp += 2;
+			}
+			vm->sp -= 2;
+			memcpy(vm->sp, &vm->ip, 2);
+			vm->ip = addr;
+			break;
+		case 0x42: // RET
+		{
+			memcpy(&vm->ip, vm->sp, 2);
+			vm->sp += 2;
+			break;
+		}
 		case 0x80+0 ... 0x80+43: // ARITHMETIC OPERATIONS
 		{
 			uint32_t a, b;
