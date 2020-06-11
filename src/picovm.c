@@ -83,7 +83,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 					vm->ip += 1;
 					break;
 				}
-#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
+#ifndef INCLUDE_OPTIONAL_INSTRUCTIONS
 				case 3:
 				{
 					vm->sp -= size;
@@ -211,11 +211,12 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 2: a *= b; break;
 				case 3: a /= b; break;
 				case 4: a %= b; break;
-
+#ifdef INCLUDE_BITWISE_INSTRUCTIONS
 				case 5: a &= b; break;
 				case 6: a |= b; break;
 				case 7: a ^= b; break;
 				case 8: a = !a; break;
+#endif
 			}
 			uint8_t sign_bit = size * 8 - 1;
 			uint32_t mask = (1 << size*8) - 1;
@@ -292,32 +293,26 @@ int8_t picovm_exec(struct picovm_s *vm)
 				if (flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
-#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 2:
 				if (~flags & PICOVM_FLAG_Z)
 					vm->ip = addr;
 				break;
-#endif
 			case 3:
 				if (flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
-#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 4:
 				if (~flags & PICOVM_FLAG_N)
 					vm->ip = addr;
 				break;
-#endif
 			case 5:
 				if ( (flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
-#ifdef INCLUDE_OPTIONAL_INSTRUCTIONS
 			case 6:
 				if ( ~(flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
 					vm->ip = addr;
 				break;
-#endif
 			}
 			break;
 			
