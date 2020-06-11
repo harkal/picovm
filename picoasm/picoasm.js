@@ -83,11 +83,11 @@ function isNumber(s) {
 }
 
 function assemble(input, offset) {
-    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?(?:".*")?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
+    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?((?:".*")?(?:[.a-z0-9]*))?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
     var bracket_group = 4
-    var op1_group = 3
+    var op1_group = 5
     var offset_group = 6
 
     // MATCHES: '(+|-)INTEGER'

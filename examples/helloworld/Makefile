@@ -1,13 +1,19 @@
 CC = gcc
 CFLAGS += -Wall -Wextra -Os
 
-all: picohello
+run: all
+	./picohello
+
+all: picohello helloworld.hex
+
+picohello: picohello.o picovm.o
+	$(CC) picohello.o picovm.o -o picohello
 
 picovm.o: ../../src/picovm.c
 	$(CC) $(CFLAGS) -c -o picovm.o ../../src/picovm.c
 
-picohello: picohello.o picovm.o
-	$(CC) picohello.o picovm.o -o picohello
+helloworld.hex: helloworld.asm
+	node ../../picoasm/picoasm.js helloworld.asm helloworld.hex
 
 .PHONY: clean
 clean:

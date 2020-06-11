@@ -93,6 +93,12 @@ int8_t picovm_exec(struct picovm_s *vm)
 				}
 #endif
 			}
+
+			uint8_t sign_bit = size * 8 - 1;
+			uint32_t mask = (1 << size*8) - 1;
+			
+			vm->flags = (*(uint32_t *)vm->sp & mask) == 0 ? PICOVM_FLAG_Z : 0;
+			if (*(uint32_t *)vm->sp & (1 << sign_bit)) vm->flags |= PICOVM_FLAG_N;
             
             break;
         }
