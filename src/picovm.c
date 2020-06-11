@@ -34,6 +34,21 @@ static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 	vm->sp += size;
 }
 
+static void update_flags(struct picovm_s *vm, uint8_t size) 
+{
+	uint8_t sign_bit = size * 8 - 1;
+	uint32_t mask = (1 << size*8) - 1;
+	
+	uint32_t v = *(uint32_t *)vm->sp;
+	if( (v & mask) == 0 ) {
+		vm->flags = PICOVM_FLAG_Z;
+	} else if (v & (1 << sign_bit)) {
+		vm->flags = PICOVM_FLAG_N;
+	} else {
+		vm->flags = 0;
+	}
+}
+
 int8_t picovm_exec(struct picovm_s *vm)
 {
 	uint16_t addr = 0;
@@ -94,11 +109,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 #endif
 			}
 
-			uint8_t sign_bit = size * 8 - 1;
-			uint32_t mask = (1 << size*8) - 1;
-			
-			vm->flags = (*(uint32_t *)vm->sp & mask) == 0 ? PICOVM_FLAG_Z : 0;
-			if (*(uint32_t *)vm->sp & (1 << sign_bit)) vm->flags |= PICOVM_FLAG_N;
+			update_flags(vm, size);
             
             break;
         }
@@ -232,13 +243,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 8: a = !a; break;
 #endif
 			}
-			uint8_t sign_bit = size * 8 - 1;
-			uint32_t mask = (1 << size*8) - 1;
-			
-			vm->flags = (a & mask) == 0 ? PICOVM_FLAG_Z : 0;
-			if (a & (1 << sign_bit)) vm->flags |= PICOVM_FLAG_N;
 
 			push_stack(vm, &a, size);
+			update_flags(vm, size);
+
 			vm->ip++;
 			break;
 		}
