@@ -41,6 +41,11 @@ Type:
 
 ```make```
 
+Documentation
+-------------
+
+Please refer to the files in the ``docs`` directory.
+
 Licensing
 ---------
 

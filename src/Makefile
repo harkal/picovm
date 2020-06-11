@@ -1,18 +1,34 @@
-# CC = llvm-gcc
-CC = arm-none-eabi-gcc
-# CFLAGS +=  -Wall -Wextra -Og -glldb
-CFLAGS += -MD -Wall -Wextra -Os -mthumb -march=armv7-m 
+ARCH := x86
 
-all: picorun
+CFLAGS += -Wall -Wextra
 
-picorun: picorun.o picovm.o
+ifeq ($(ARCH),x86)
+	CC = gcc
+else ifeq ($(ARCH),armv7)
+	CC = arm-none-eabi-gcc
+	CFLAGS += -mthumb -march=armv7-m 
+endif
 
-install: picovm
-	install -TD evmdemo /usr/local/bin/evmdemo
-	install -TD -m0644 picovm.c /usr/local/share/picovm/picovm.c
-	install -TD -m0644 picovm.h /usr/local/share/picovm/picovm.h
+COPTFLAGS := -Os
 
+CFLAGS += $(COPTFLAGS)
+
+all: picovm
+
+debug: COPTFLAGS := -DDEBUG -g
+debug: pico
+
+picovm:
+	$(CC) $(CFLAGS) -c -o picovm.o picovm.c
+
+ifeq ($(ARCH),x86)
+pico: picorun.o picovm.o
+	$(CC) picorun.o picovm.o -o pico
+else
+pico:
+endif
+
+.PHONY: clean
 clean:
-	rm -f picovm *.d *.o core
+	rm -f pico *.d *.o core
 
--include *.d

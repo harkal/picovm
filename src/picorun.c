@@ -1,4 +1,9 @@
 
+/*
+    This is a small testing program to inspect the execution of 
+    a picovm program. 
+*/
+
 #include <stdio.h>
 #include <string.h>
 
@@ -8,7 +13,7 @@
 
 uint8_t vm_memory[64];
 
-void coredump(struct picovm_s *vm, uint16_t size)
+void trace(struct picovm_s *vm, uint16_t size)
 {
     for(uint16_t i = 0 ; i < size ; i++)
     {
@@ -34,7 +39,7 @@ void coredump(struct picovm_s *vm, uint16_t size)
 
 void call_user(void *ctx UNUSED) 
 {
-    printf("*\n");
+
 }
 
 int main(int argc UNUSED, char **argv UNUSED)
@@ -50,7 +55,7 @@ int main(int argc UNUSED, char **argv UNUSED)
 
     if (argc != 2) {
 exit_with_helpmsg:
-		fprintf(stderr, "Usage: %s [-v] {binfile} {hex-start-addr}\n", argv[0]);
+		fprintf(stderr, "Usage: %s [-v] binfile\n", argv[0]);
 		return 1;
 	}
 
@@ -63,12 +68,12 @@ exit_with_helpmsg:
 		vm_memory[i] = ch;
 	fclose(f);
 
-    coredump(&vm, 64);
+    trace(&vm, 64);
     int i;
     for(i = 0 ; i < 50 ; i++) {
         if(picovm_exec(&vm))
             break;
-        coredump(&vm, 64);
+        trace(&vm, 64);
     }
 
     printf("Executed %d instructions", i);
