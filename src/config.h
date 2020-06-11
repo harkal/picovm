@@ -13,7 +13,7 @@
      16 : 16bit
      32 : 32bit 
 */
-#define USE_SINGLE_DATA_TYPE 32
+#define USE_SINGLE_DATA_TYPE 0
 
 
 #endif

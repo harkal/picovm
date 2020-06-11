@@ -48,6 +48,7 @@ var opcodes = {
 
     CALL: 0x40,
     RET: 0x42,
+    CALLUSER: 0x43,
 
     JMP_REL_BYTE : JMP_BASE,
     JMP_REL_SHORT: JMP_BASE + 1,
@@ -82,7 +83,7 @@ function isNumber(s) {
 }
 
 function assemble(input, offset) {
-    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,7}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
+    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?([.a-z0-9]*)?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
     var bracket_group = 4
@@ -236,7 +237,6 @@ function assemble(input, offset) {
     for (var i = 0, l = lines.length; i < l; i++) {
         try {
             var match = regex.exec(lines[i]);
-            
             if (match[1] !== undefined || match[2] !== undefined) {
                 if (match[1] !== undefined)
                     addLabel(decorateLabel(match[1]));
@@ -292,9 +292,9 @@ function assemble(input, offset) {
                         case 'POP16':
                         case 'POP32':
                         case 'RET':
+                        case 'CALLUSER':
                             checkNoExtraArg(instr, match[op1_group]);
-                            opCode = opcodes[instr];
-                            codePush(opCode);
+                            codePush(opcodes[instr]);
                             break;
                         case 'DUP':
                         case 'DUP16':

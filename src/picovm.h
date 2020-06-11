@@ -16,8 +16,11 @@ struct picovm_s
 	uint16_t ip;
     uint8_t *sp;
     uint8_t flags;
-    
+
 	void *mem;
+    void *ctx;
+
+    void (*call_user)(void *ctx);
 };
 
 extern int8_t picovm_exec(struct picovm_s *vm);

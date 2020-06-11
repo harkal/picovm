@@ -32,13 +32,20 @@ void coredump(struct picovm_s *vm, uint16_t size)
 
 }
 
+void call_user(void *ctx UNUSED) 
+{
+    printf("*\n");
+}
+
 int main(int argc UNUSED, char **argv UNUSED)
 {
     memset(vm_memory, 0, 64);
 
     struct picovm_s vm = {
 	    0, &vm_memory[0] + 64, 0,
-        &vm_memory
+        &vm_memory,
+        NULL,
+        call_user
     };
 
     if (argc != 2) {
