@@ -29,4 +29,12 @@ Typical number with the current version compiled for the ARMv7-M architecture:
 | - Bitwise operations  | 728 bytes |
 | - Advanced operations | 632 bytes |
 
+Dependencies
+------------
 
+None.
+
+Licensing
+---------
+
+picoVM is published under the MIT License, see LICENSE for details.
