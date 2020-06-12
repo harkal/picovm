@@ -37,21 +37,24 @@ void trace(struct picovm_s *vm, uint16_t size)
 
 }
 
+void call_user(void *ctx UNUSED);
+
+struct picovm_s vm = {
+    0, 64, &vm_memory[0] + 64, 0,
+    &vm_memory,
+    NULL,
+    call_user
+};
+
 void call_user(void *ctx UNUSED) 
 {
-
+    putc(*(char *)vm.sp, stdout);
 }
+
 
 int main(int argc UNUSED, char **argv UNUSED)
 {
     memset(vm_memory, 0, 64);
-
-    struct picovm_s vm = {
-	    0, &vm_memory[0] + 64, 0,
-        &vm_memory,
-        NULL,
-        call_user
-    };
 
     if (argc != 2) {
 exit_with_helpmsg:
@@ -70,13 +73,13 @@ exit_with_helpmsg:
 
     trace(&vm, 64);
     int i;
-    for(i = 0 ; i < 50 ; i++) {
+    for(i = 0 ; i < 500 ; i++) {
         if(picovm_exec(&vm))
             break;
         trace(&vm, 64);
     }
 
-    printf("Executed %d instructions", i);
+    printf("\nExecuted %d instructions", i);
 
     return 0;
 }

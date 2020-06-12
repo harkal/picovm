@@ -224,6 +224,25 @@ int8_t picovm_exec(struct picovm_s *vm)
 			vm->ip += 1;
 			break;
 		}
+
+		case 0x5c ... 0x5c+3:
+		{
+			int8_t offset = (int8_t)READ8(vm->ip+1);
+			vm->sp -= size;
+			MEMCPY_SIZE(vm->sp, vm->mem + vm->sfp + offset);
+			vm->ip += 2;
+			break;
+		}
+
+		case 0x6c ... 0x6c+3:
+		{
+			int8_t offset = (int8_t)READ8(vm->ip+1);
+			MEMCPY_SIZE(vm->mem + vm->sfp + offset, vm->sp);
+			vm->sp += size;
+			vm->ip += 2;
+			break;
+		}
+
 		case 0x80+0 ... 0x80+43: // ARITHMETIC OPERATIONS
 		{
 			uint32_t a, b;
