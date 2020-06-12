@@ -37,7 +37,7 @@ static void pop_stack(struct picovm_s *vm, uint8_t size, void *value)
 static void update_flags(struct picovm_s *vm, uint8_t size) 
 {
 	uint8_t sign_bit = size * 8 - 1;
-	uint32_t mask = (1 << size*8) - 1;
+	uint32_t mask = (1 << sign_bit) - 1;
 	
 	uint32_t v = *(uint32_t *)vm->sp;
 	if( (v & mask) == 0 ) {
@@ -207,12 +207,17 @@ int8_t picovm_exec(struct picovm_s *vm)
 				vm->sp += 2;
 			}
 			vm->sp -= 2;
+			memcpy(vm->sp, &vm->sfp, 2);
+			vm->sfp = vm->sp - (uint8_t *)vm->mem;
+			vm->sp -= 2;
 			memcpy(vm->sp, &vm->ip, 2);
 			vm->ip = addr;
 			break;
 		case 0x42: // RET
 		{
 			memcpy(&vm->ip, vm->sp, 2);
+			vm->sp += 2;
+			memcpy(&vm->sfp, vm->sp, 2);
 			vm->sp += 2;
 			break;
 		}

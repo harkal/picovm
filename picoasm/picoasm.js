@@ -85,7 +85,7 @@ function isNumber(s) {
     return x.toString() === s;
 }
 
-function assemble(input, offset) {
+function assemble(input, code_offset) {
     var regex = /^[\t ]*(?:([_.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?((?:".*")?(?:[_.a-z0-9]*))?[\t ]*([-+])?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
@@ -204,7 +204,7 @@ function assemble(input, offset) {
         if (upperLabel in normalizedLabels)
             throw 'Duplicate label: ' + label;
 
-        labels[label] = code.length + offset;
+        labels[label] = code.length + code_offset;
         
 
         return label
@@ -257,7 +257,7 @@ function assemble(input, offset) {
                     var p1, p2, opCode;
 
                     if (instr !== 'DB')
-                        mapping[(code.length + offset)] = i;
+                        mapping[(code.length + code_offset)] = i;
 
                     switch (instr) {
                         case 'ABSOLUTE':
@@ -528,7 +528,7 @@ function assemble(input, offset) {
         }
         if (label in labels) {
             if (code[i][0] === '^') {
-                var rel = labels[label] - i + offset
+                var rel = labels[label] - i + code_offset
                 if (rel >= -128 && rel <= 127 ) {
                     code[i-1] &= 0xfe 
                     code.splice(i+1,1)
@@ -563,7 +563,7 @@ function assemble(input, offset) {
 
         if (label in labels) {
             if (code[i][0] === '^') {
-                var rel = labels[label] - i + offset + 1
+                var rel = labels[label] - i + code_offset + 1
                 if (rel >= -128 && rel <= 127 ) {
                     code[i] = rel
                 } else {
