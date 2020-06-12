@@ -83,7 +83,7 @@ function isNumber(s) {
 }
 
 function assemble(input, offset) {
-    var regex = /^[\t ]*(?:([.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?((?:".*")?(?:[.a-z0-9]*))?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
+    var regex = /^[\t ]*(?:([_.a-z]\w*)[:])?(?:[\t ]*([a-z0-9]{2,8}))?(?:[\t ]*((\[)?((?:".*")?(?:[_.a-z0-9]*))?[\t ]*\+?[\t ]*([0-9]*)?[\t ]*\]?))?(?:[\t ]*(?:;[\t ]*.*)?)?$/i
     // Regex group indexes for operands
     var label_group = 1
     var bracket_group = 4
@@ -182,9 +182,12 @@ function assemble(input, offset) {
 
     var lastLabel = ''
     function decorateLabel(label) {
+        if (labels[label]) {
+            return label
+        }
         if (label.slice(0,1) === '.') {
             return lastLabel + '___' + label.slice(1)
-        } 
+        }
         lastLabel = label
         return label
     }
@@ -196,6 +199,7 @@ function assemble(input, offset) {
             throw 'Duplicate label: ' + label;
 
         labels[label] = code.length + offset;
+        
 
         return label
     };
@@ -237,6 +241,7 @@ function assemble(input, offset) {
     for (var i = 0, l = lines.length; i < l; i++) {
         try {
             var match = regex.exec(lines[i]);
+            // console.log(lines[i], match)
             if (match[1] !== undefined || match[2] !== undefined) {
                 if (match[1] !== undefined)
                     addLabel(decorateLabel(match[1]));
@@ -314,7 +319,7 @@ function assemble(input, offset) {
                             if (K.value < 0 || K.value > 255) {
                                 throw `${instr} depth can range from 0 - 255`;
                             }
-                            if (K.value <= 3) {
+                            if (K.value < 3) {
                                 codePush(opcodes[instr] | ((K.value) << 2));
                             } else {
                                 codePush(opcodes[instr] | (0x3 << 2) )

@@ -30,8 +30,6 @@ int main(int argc UNUSED, char **argv UNUSED)
 {
     memset(vm_memory, 0, 64);
 
-    
-
     int ch;
     FILE *f = fopen("helloworld.hex", "rb");
 	if (!f)
