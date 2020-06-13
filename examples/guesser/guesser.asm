@@ -1,5 +1,5 @@
 ;
-;  Guess the number example in picoVM assembly
+;  "Guess the number" example in picoVM assembly
 ;
             LOAD16 question
             CALL print_string
@@ -20,8 +20,6 @@
             MOD
             LOAD 1
             ADD
-
-            HLT
 
             SUB
             JEQ success
@@ -98,6 +96,9 @@ read_input:
             POP16               ; Pop local index
             RET
 
+;
+;  Converts a string to an 1 byte integer
+; 
 string_to_int:
             LOAD   0            ; Reserve the integer
             LOAD16 0            ; Reserve and init index to 0

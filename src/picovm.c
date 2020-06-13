@@ -260,7 +260,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 
 		case 0x80 ... 0xab: // ARITHMETIC OPERATIONS
 		{
-			uint32_t a, b;
+			uint32_t a = 0, b = 0;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
 			if (cmd != 7) {
 				pop_stack(vm, size, &b);

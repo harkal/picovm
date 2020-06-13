@@ -76,7 +76,7 @@ exit_with_helpmsg:
     for(i = 0 ; i < 500 ; i++) {
         if(picovm_exec(&vm))
             break;
-        trace(&vm, 64);
+        // trace(&vm, 64);
     }
 
     printf("\nExecuted %d instructions", i);

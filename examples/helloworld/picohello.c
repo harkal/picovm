@@ -15,7 +15,7 @@ void call_user(void *ctx);
 
 uint8_t vm_memory[64];
 struct picovm_s vm = {
-    0, &vm_memory[0] + 64, 0,
+    0, 64, &vm_memory[0] + 64, 0,
     &vm_memory,
     NULL,
     call_user
