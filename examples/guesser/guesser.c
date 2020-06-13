@@ -17,7 +17,7 @@ void call_user(void *ctx);
 
 uint8_t vm_memory[VM_SIZE];
 struct picovm_s vm = {
-    0, &vm_memory[0] + VM_SIZE, 0,
+    0, VM_SIZE, &vm_memory[0] + VM_SIZE, 0,
     &vm_memory,
     NULL,
     call_user
@@ -99,7 +99,7 @@ int main(int argc UNUSED, char **argv UNUSED)
         if(picovm_exec(&vm))
             break;
         trace(&vm, 1024);
-        if(i == 50)break;
+        // if(i == 50)break;
     }
 
     printf("\n\nExecuted %d instructions", i);

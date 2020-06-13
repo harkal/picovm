@@ -1,6 +1,6 @@
 ARCH := armv7
 
-CFLAGS += -Wall -Wextra
+CFLAGS += -Wall -Wextra 
 
 ifeq ($(ARCH),x86)
 	CC = gcc

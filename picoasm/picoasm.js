@@ -247,7 +247,7 @@ function assemble(input, code_offset) {
     for (var i = 0, l = lines.length; i < l; i++) {
         try {
             var match = regex.exec(lines[i]);
-            console.log(lines[i], match)
+            // console.log(lines[i], match)
             if (match[1] !== undefined || match[2] !== undefined) {
                 if (match[1] !== undefined)
                     addLabel(decorateLabel(match[1]));

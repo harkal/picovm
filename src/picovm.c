@@ -22,6 +22,10 @@
 	#define MEMCPY_SIZE(d, s) memcpy((d), (s), size)
 #endif
 
+#define MEMCPY_2(d, s) *(uint16_t*)(d) = *(uint16_t*)(s)
+#define MEMCPY_4(d, s) *(uint32_t*)(d) = *(uint32_t*)(s)
+#define MEMCPY_8(d, s) *(uint64_t*)(d) = *(uint64_t*)(s)
+
 static void push_stack(struct picovm_s *vm, void *value, uint8_t size)
 {
     vm->sp -= size;
@@ -86,7 +90,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 1:
 				{
 					uint8_t offset = READ8(vm->ip + 1);
-					memcpy(&addr, vm->sp, sizeof(uint16_t));
+					MEMCPY_2(&addr, vm->sp);
 					vm->sp += sizeof(uint16_t);
 					vm->sp -= size;
 					MEMCPY_SIZE(vm->sp, vm->mem + addr + offset);
@@ -101,7 +105,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 						uint16_t addr;
 					} data;
 
-					memcpy(&data, vm->sp, sizeof(uint16_t) * 2);
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+					MEMCPY_4(&data, vm->sp);
+					#pragma GCC diagnostic pop
 					vm->sp += sizeof(uint16_t) * 2;
 					vm->sp -= size;
 					MEMCPY_SIZE(vm->sp, vm->mem + data.addr + data.offset);
@@ -142,7 +149,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 				case 1:
 				{
 					uint8_t offset = READ8(vm->ip + 1);
-					memcpy(&addr, vm->sp + size, 2);
+					MEMCPY_2(&addr, vm->sp + size);
 					MEMCPY_SIZE(vm->mem + addr + offset, vm->sp);
 					vm->sp += size + 2;
 					vm->ip += 2;
@@ -156,7 +163,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 						uint16_t addr;
 					} data;
 
-					memcpy(&data, vm->sp + size, sizeof(uint16_t)*2);
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+					MEMCPY_4(&data, vm->sp + size);
+					#pragma GCC diagnostic pop
 					MEMCPY_SIZE(vm->mem + data.addr + data.offset, vm->sp);
 					vm->sp += size + sizeof(uint16_t)*2;
 					vm->ip += 1;
@@ -203,21 +213,21 @@ int8_t picovm_exec(struct picovm_s *vm)
 			vm->ip += 3;
 			if (0) {
 		case 0x41: // CALL [ref]
-				memcpy(&addr, vm->sp, 2);
+				MEMCPY_2(&addr, vm->sp);
 				vm->sp += 2;
 			}
 			vm->sp -= 2;
-			memcpy(vm->sp, &vm->sfp, 2);
+			MEMCPY_2(vm->sp, &vm->sfp);
 			vm->sfp = vm->sp - (uint8_t *)vm->mem;
 			vm->sp -= 2;
-			memcpy(vm->sp, &vm->ip, 2);
+			MEMCPY_2(vm->sp, &vm->ip);
 			vm->ip = addr;
 			break;
 		case 0x42: // RET
 		{
-			memcpy(&vm->ip, vm->sp, 2);
+			MEMCPY_2(&vm->ip, vm->sp);
 			vm->sp += 2;
-			memcpy(&vm->sfp, vm->sp, 2);
+			MEMCPY_2(&vm->sfp, vm->sp);
 			vm->sp += 2;
 			break;
 		}
@@ -248,7 +258,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 			break;
 		}
 
-		case 0x80+0 ... 0x80+43: // ARITHMETIC OPERATIONS
+		case 0x80 ... 0xab: // ARITHMETIC OPERATIONS
 		{
 			uint32_t a, b;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
@@ -283,7 +293,10 @@ int8_t picovm_exec(struct picovm_s *vm)
 			struct { float b, a; } fops;
 			uint8_t cmd = (opcode & 0x3c) >> 2;
 			
-			memcpy(&fops, vm->sp, sizeof(float) * 2);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+			MEMCPY_8(&fops, vm->sp);
+			#pragma GCC diagnostic pop
 			vm->sp += sizeof(float) * 2;
 			switch (cmd)
 			{
