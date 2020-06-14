@@ -29,7 +29,6 @@ pico:
 endif
 
 measure: picovm.o
-	size picovm.o
 
 .PHONY: clean
 clean:

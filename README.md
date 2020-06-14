@@ -21,13 +21,13 @@ the application's needs this can go down to 632 bytes without floating point ari
 
 Typical number with the current version compiled for the ARMv7-M architecture:
 
-|                       | Code size |
-|-----------------------|:---------:|
-| Full features         | 994 bytes |
-| - floating point      | 790 bytes |
-| - Single integer type | 770 bytes |
-| - Bitwise operations  | 728 bytes |
-| - Advanced operations | 632 bytes |
+|                       | Code size     |
+|-----------------------|:-------------:|
+| Full features         |    1118 bytes |
+| - floating point      |     926 bytes |
+| - Single integer type |     872 bytes |
+| - Bitwise operations  |     822 bytes |
+| - Advanced operations |     754 bytes |
 
 Dependencies
 ------------

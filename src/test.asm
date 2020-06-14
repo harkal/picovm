@@ -1,25 +1,22 @@
 
         LOAD32 [res]
-        ; LOAD16 sq
-        CALL sq
+        CALL sqr
         CALLUSER
-.l:     LOAD32 1
+la:     LOAD32 1
         SUB32
-        ; DUP32
-        ; STORE32 [res]
-        JLT .l
+        
+        JLT la
         
         HLT
 
 one:    DB 0x04030001
 res:    DB 0x00000002
 
-sq:     DIG32 2
+sqr:    LOAD32 [sfp + 2]
 
         DUP32
         MUL32
 
-        DUP32 2
-        POP32
+        STORE32 [sfp + 2]
         RET
 
