@@ -16,8 +16,8 @@ Footprint
 ---------
 picoVM is mainly targeted for embedded devices that usually have restricted memory. 
 On ARM with all the features compiled supporing 8,16 and 32 bit integers, 32 bit 
-floats and the full instruction set the code sums up to less than 1 KB. Depending on 
-the application's needs this can go down to 632 bytes without floating point arithmetic etc.
+floats and the full instruction set the code sums up to about 1KB. Depending on 
+the application's needs this can go down to 700 bytes without floating point arithmetic etc.
 
 Typical number with the current version compiled for the ARMv7-M architecture:
 
