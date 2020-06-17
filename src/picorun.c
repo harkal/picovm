@@ -1,7 +1,7 @@
 
 /*
-    This is a small testing program to inspect the execution of 
-    a picovm program. 
+	This is a small testing program to inspect the execution of 
+	a picovm program. 
 */
 
 #include <stdio.h>
@@ -15,55 +15,55 @@ uint8_t vm_memory[64];
 
 void trace(struct picovm_s *vm, uint16_t size)
 {
-    for(uint16_t i = 0 ; i < size ; i++)
-    {
-        printf("%02x", vm_memory[i]);
-    }
-    printf("\n");
+	for(uint16_t i = 0 ; i < size ; i++)
+	{
+		printf("%02x", vm_memory[i]);
+	}
+	printf("\n");
 
-    for(uint16_t i = 0 ; i < size ; i++)
-    {
-        if (i == vm->ip) {
-            printf("^^-- IP ");
-            i += 3;
-        } else if (i == (vm->sp - (uint8_t *)vm->mem)) {
-            printf("^^-- SP");
-        } else {
-            printf("  ");
-        }
-    }
+	for(uint16_t i = 0 ; i < size ; i++)
+	{
+		if (i == vm->ip) {
+			printf("^^-- IP ");
+			i += 3;
+		} else if (i == (vm->sp - (uint8_t *)vm->mem)) {
+			printf("^^-- SP");
+		} else {
+			printf("  ");
+		}
+	}
 
-    printf("\n N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
+	printf("\n N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
 
 }
 
 void call_user(void *ctx UNUSED);
 
 struct picovm_s vm = {
-    0, 64, &vm_memory[0] + 64, 0,
-    &vm_memory,
-    NULL,
-    call_user
+	0, 64, &vm_memory[0] + 64, 0,
+	&vm_memory,
+	NULL,
+	call_user
 };
 
 void call_user(void *ctx UNUSED) 
 {
-    putc(*(char *)vm.sp, stdout);
+	putc(*(char *)vm.sp, stdout);
 }
 
 
 int main(int argc UNUSED, char **argv UNUSED)
 {
-    memset(vm_memory, 0, 64);
+	memset(vm_memory, 0, 64);
 
-    if (argc != 2) {
+	if (argc != 2) {
 exit_with_helpmsg:
 		fprintf(stderr, "Usage: %s [-v] binfile\n", argv[0]);
 		return 1;
 	}
 
-    int ch;
-    FILE *f = fopen(argv[1], "rb");
+	int ch;
+	FILE *f = fopen(argv[1], "rb");
 	if (!f)
 		goto exit_with_helpmsg;
 
@@ -71,15 +71,15 @@ exit_with_helpmsg:
 		vm_memory[i] = ch;
 	fclose(f);
 
-    trace(&vm, 64);
-    int i;
-    for(i = 0 ; i < 500 ; i++) {
-        if(picovm_exec(&vm))
-            break;
-        // trace(&vm, 64);
-    }
+	trace(&vm, 64);
+	int i;
+	for(i = 0 ; i < 500 ; i++) {
+		if(picovm_exec(&vm))
+			break;
+		// trace(&vm, 64);
+	}
 
-    printf("\nExecuted %d instructions", i);
+	printf("\nExecuted %d instructions", i);
 
-    return 0;
+	return 0;
 }

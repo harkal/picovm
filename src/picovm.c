@@ -28,7 +28,7 @@
 
 static void push_stack(struct picovm_s *vm, void *value, uint8_t size)
 {
-    vm->sp -= size;
+	vm->sp -= size;
 	memcpy(vm->sp, value, size);
 }
 
@@ -66,14 +66,14 @@ static uint8_t __attribute__ ((noinline)) get_k(struct picovm_s *vm, uint8_t opc
 int8_t picovm_exec(struct picovm_s *vm)
 {
 	uint16_t addr = 0;
-    uint8_t opcode = READ8(vm->ip);
+	uint8_t opcode = READ8(vm->ip);
 
 	uint8_t size = 1 << (opcode & 0x03);
 
-    switch (opcode)
+	switch (opcode)
 	{
-        case 0x00 ... 0x00 + 15: // LOAD addr
-        {
+		case 0x00 ... 0x00 + 15: // LOAD addr
+		{
 			uint8_t cmd = (opcode & 0xc) >> 2;
 
 			switch (cmd)
@@ -127,12 +127,12 @@ int8_t picovm_exec(struct picovm_s *vm)
 			}
 
 			update_flags(vm, size);
-            
-            break;
-        }
+			
+			break;
+		}
 		
-        case 0x10 ... 0x10 + 9: // STORE addr
-        {
+		case 0x10 ... 0x10 + 9: // STORE addr
+		{
 			uint8_t cmd = (opcode & 0xc) >> 2;
 
 			switch (cmd)
@@ -173,40 +173,40 @@ int8_t picovm_exec(struct picovm_s *vm)
 					break;
 				}
 			}
-            
-            break;
-        }
+			
+			break;
+		}
 
 		case 0x1c ... 0x1c + 3: // POP
-        {
+		{
 			vm->sp += size;
-            vm->ip += 1;
-            break;
-        }
+			vm->ip += 1;
+			break;
+		}
 
 		case 0x20 ... 0x20 + 15: // DUP
-        {
+		{
 			uint8_t k = get_k(vm, opcode);
 
 			vm->sp -= size;
 			memcpy(vm->sp, vm->sp + size, k + size);
 			MEMCPY_SIZE(vm->sp + size + k, vm->sp);
 
-            vm->ip += 1;
-            break;
-        }
+			vm->ip += 1;
+			break;
+		}
 
 		case 0x30 ... 0x30 + 15: // DIG
-        {
+		{
 			uint8_t k = get_k(vm, opcode);
 
 			vm->sp -= size;
 			MEMCPY_SIZE(vm->sp, vm->sp + size + k);
 			update_flags(vm, size);
 
-            vm->ip += 1;
-            break;
-        }
+			vm->ip += 1;
+			break;
+		}
 
 		case 0x40: // CALL
 			addr = (int16_t)READ16(vm->ip+1);

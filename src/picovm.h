@@ -14,14 +14,14 @@ extern "C" {
 struct picovm_s
 {
 	uint16_t ip;
-    uint16_t sfp;
-    uint8_t *sp;
-    uint8_t flags;
+	uint16_t sfp;
+	uint8_t *sp;
+	uint8_t flags;
 
 	void *mem;
-    void *ctx;
+	void *ctx;
 
-    void (*call_user)(void *ctx);
+	void (*call_user)(void *ctx);
 };
 
 extern int8_t picovm_exec(struct picovm_s *vm);
