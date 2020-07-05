@@ -225,10 +225,9 @@ int8_t picovm_exec(struct picovm_s *vm)
 			break;
 		case 0x42: // RET
 		{
-			MEMCPY_2(&vm->ip, vm->sp);
-			vm->sp += 2;
-			MEMCPY_2(&vm->sfp, vm->sp);
-			vm->sp += 2;
+			MEMCPY_2(&vm->ip, vm->sfp + (uint8_t *)vm->mem - 2);
+			vm->sp = vm->sfp + (uint8_t *)vm->mem + 2;
+			MEMCPY_2(&vm->sfp, vm->sfp + (uint8_t *)vm->mem);
 			break;
 		}
 		case 0x43: // CALLUSER
