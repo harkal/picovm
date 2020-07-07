@@ -359,7 +359,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 					vm->ip = addr;
 				break;
 			case 3:
-				if (flags & PICOVM_FLAG_N)
+				if ((flags & PICOVM_FLAG_N) || (flags & PICOVM_FLAG_Z))
 					vm->ip = addr;
 				break;
 			case 4:
@@ -367,11 +367,11 @@ int8_t picovm_exec(struct picovm_s *vm)
 					vm->ip = addr;
 				break;
 			case 5:
-				if ( (flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
+				if ( (flags & PICOVM_FLAG_N)  )
 					vm->ip = addr;
 				break;
 			case 6:
-				if ( ~(flags & PICOVM_FLAG_N) && (flags & PICOVM_FLAG_Z) )
+				if ( (~flags & PICOVM_FLAG_N) && (~flags & PICOVM_FLAG_Z))
 					vm->ip = addr;
 				break;
 			}

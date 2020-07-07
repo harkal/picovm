@@ -11,7 +11,9 @@
 
 #define UNUSED __attribute__((unused))
 
-uint8_t vm_memory[64];
+const uint16_t mem_size = 64;
+
+uint8_t vm_memory[mem_size];
 
 void trace(struct picovm_s *vm, uint16_t size)
 {
@@ -40,7 +42,7 @@ void trace(struct picovm_s *vm, uint16_t size)
 void call_user(void *ctx UNUSED);
 
 struct picovm_s vm = {
-	0, 64, &vm_memory[0] + 64, 0,
+	0, mem_size, &vm_memory[0] + mem_size, 0,
 	&vm_memory,
 	NULL,
 	call_user
@@ -54,7 +56,7 @@ void call_user(void *ctx UNUSED)
 
 int main(int argc UNUSED, char **argv UNUSED)
 {
-	memset(vm_memory, 0, 64);
+	memset(vm_memory, 0, mem_size);
 
 	if (argc != 2) {
 exit_with_helpmsg:
@@ -71,12 +73,12 @@ exit_with_helpmsg:
 		vm_memory[i] = ch;
 	fclose(f);
 
-	trace(&vm, 64);
+	trace(&vm, mem_size);
 	int i;
 	for(i = 0 ; i < 500 ; i++) {
 		if(picovm_exec(&vm))
 			break;
-		// trace(&vm, 64);
+		trace(&vm, mem_size);
 	}
 
 	printf("\nExecuted %d instructions", i);
