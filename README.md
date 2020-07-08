@@ -11,6 +11,7 @@ Features
 * Supports 8bits, 16bits and 32bits integer arithmetic and logic operations
 * Supports floating point arithemtic
 * Stack based
+* picolang C like compiler to generate vm specific code (https://github.com/harkal/picolang)
 
 Footprint
 ---------
