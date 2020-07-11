@@ -22,8 +22,8 @@ picovm:
 	$(CC) $(CFLAGS) -c -o picovm.o picovm.c
 
 ifeq ($(ARCH),x86)
-pico: picorun.o picovm.o
-	$(CC) picorun.o picovm.o -o pico
+pico: picorun.o picovm.o picodisasm.o
+	$(CC) picorun.o picovm.o picodisasm.o -o pico
 else
 pico:
 endif

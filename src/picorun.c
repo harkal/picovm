@@ -8,35 +8,51 @@
 #include <string.h>
 
 #include "picovm.h"
+#include "picodisasm.h"
 
 #define UNUSED __attribute__((unused))
 
-const uint16_t mem_size = 64;
+const uint16_t mem_size = 128;
 
 uint8_t vm_memory[mem_size];
 
-void trace(struct picovm_s *vm, uint16_t size)
+void dump_stack(struct picovm_s *vm, uint16_t size)
 {
-	for(uint16_t i = 0 ; i < size ; i++)
+	printf("Stack memory:\n");
+	for(uint16_t i = size - 64 ; i < size ; i++)
 	{
 		printf("%02x", vm_memory[i]);
 	}
 	printf("\n");
 
-	for(uint16_t i = 0 ; i < size ; i++)
+	for(uint16_t i = size - 64 ; i < size ; i++)
 	{
-		if (i == vm->ip) {
-			printf("^^-- IP ");
-			i += 3;
-		} else if (i == (vm->sp - (uint8_t *)vm->mem)) {
+		if (i == (vm->sp - (uint8_t *)vm->mem)) {
 			printf("^^-- SP");
 		} else {
 			printf("  ");
 		}
 	}
+}
 
-	printf("\n N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
+void trace(struct picovm_s *vm, uint16_t size)
+{
+	printf("\n");
 
+	char mnemonic[16];
+	mnemonic[0] = 0;
+	
+	printf("  IP: 0x%04x\n", vm->ip);
+	printf(" SPF: 0x%04x\n", vm->sfp);
+	printf("  SP: 0x%04lx\n", (void *)vm->sp - vm->mem);
+	printf("   N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
+
+	int s = disassemble(vm->mem, vm->ip, mnemonic);
+	printf("-> %s\n", mnemonic);
+	if (s > 0) {
+		disassemble(vm->mem, vm->ip + s, mnemonic);
+		printf("   %s\n", mnemonic);
+	}
 }
 
 void call_user(void *ctx UNUSED);
@@ -73,12 +89,12 @@ exit_with_helpmsg:
 		vm_memory[i] = ch;
 	fclose(f);
 
-	trace(&vm, mem_size);
 	int i;
 	for(i = 0 ; i < 500 ; i++) {
+		trace(&vm, mem_size);
 		if(picovm_exec(&vm))
 			break;
-		trace(&vm, mem_size);
+		dump_stack(&vm, mem_size);
 	}
 
 	printf("\nExecuted %d instructions", i);
