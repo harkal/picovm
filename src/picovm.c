@@ -218,16 +218,16 @@ int8_t picovm_exec(struct picovm_s *vm)
 			}
 			vm->sp -= 2;
 			MEMCPY_2(vm->sp, &vm->sfp);
-			vm->sfp = vm->sp - (uint8_t *)vm->mem;
 			vm->sp -= 2;
+			vm->sfp = vm->sp - (uint8_t *)vm->mem;
 			MEMCPY_2(vm->sp, &vm->ip);
 			vm->ip = addr;
 			break;
 		case 0x42: // RET
 		{
-			MEMCPY_2(&vm->ip, vm->sfp + (uint8_t *)vm->mem - 2);
-			vm->sp = vm->sfp + (uint8_t *)vm->mem + 2;
-			MEMCPY_2(&vm->sfp, vm->sfp + (uint8_t *)vm->mem);
+			MEMCPY_2(&vm->ip, vm->sfp + (uint8_t *)vm->mem);
+			MEMCPY_2(&vm->sfp, vm->sfp + (uint8_t *)vm->mem + 2);
+			vm->sp += 4;
 			break;
 		}
 		case 0x43: // CALLUSER
