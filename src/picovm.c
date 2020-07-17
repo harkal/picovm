@@ -337,7 +337,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 				addr = vm->ip + (int8_t)READ8(vm->ip+1);
 				vm->ip += 2;
 			} else {
-				addr = vm->ip + (int16_t)READ16(vm->ip+1);
+				addr = (int16_t)READ16(vm->ip+1);
 				vm->ip += 3;
 			}
 

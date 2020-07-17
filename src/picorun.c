@@ -26,16 +26,16 @@ void dump_stack(struct picovm_s *vm, uint16_t size)
 	printf("   N:%d Z:%d\n", vm->flags&PICOVM_FLAG_N, vm->flags&PICOVM_FLAG_Z);
 
 	printf("Stack memory:\n");
-	for(uint16_t i = size - 64 ; i < size ; i++)
+	for(unsigned int i = size - 64 ; i < size ; i++)
 	{
-		if (i % 4 == 0)printf(" ");
+		if (i % 4 == 3)printf(" ");
 		printf("%02x", vm_memory[i]);
 	}
 	printf("\n");
 
-	for(uint16_t i = size - 64 ; i <= size ; i++)
+	for(unsigned int i = size - 64 ; i <= size ; i++)
 	{
-		if (i % 4 == 0)printf(" ");
+		if (i % 4 == 3)printf(" ");
 		if (i == (vm->sp - (uint8_t *)vm->mem)) {
 			printf("^^-- SP");
 		} else {
@@ -43,9 +43,9 @@ void dump_stack(struct picovm_s *vm, uint16_t size)
 		}
 	}
 	printf("\n");
-	for(uint16_t i = size - 64 ; i <= size ; i++)
+	for(unsigned int i = size - 64 ; i <= size ; i++)
 	{
-		if (i % 4 == 0)printf(" ");
+		if (i % 4 == 3)printf(" ");
 		if (i == vm->sfp) {
 			printf("^^-- SFP");
 		} else {
