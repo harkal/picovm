@@ -163,7 +163,7 @@ int disassemble(void *mem, uint16_t ip, char *str)
 			}
 			return 1;
 		}
-		case 0xac ... 0xac + 4: // FLOATING POINT OPERATIONS
+		case 0xac ... 0xac + 12: // FLOATING POINT OPERATIONS
 		{
 			uint8_t cmd = (opcode & 0x3c) >> 2;
 			
@@ -179,12 +179,12 @@ int disassemble(void *mem, uint16_t ip, char *str)
 		}
 		case 0xbc: // CONVI
 		{
-			printf(str, "CONVI"); break;
+			sprintf(str, "CONVI"); break;
 			return 1;
 		}
-		case 0xbc + 1: // CONVF
+		case 0xbd: // CONVF
 		{
-			printf(str, "CONVF"); break;
+			sprintf(str, "CONVF"); break;
 			return 1;
 		}
 		// JMP addr

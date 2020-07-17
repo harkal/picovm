@@ -287,7 +287,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 			break;
 		}
 #ifdef INCLUDE_FLOATING_POINT_INSTRUCTIONS
-		case 0xac ... 0xac + 4: // FLOATING POINT OPERATIONS
+		case 0xac ... 0xac + 12: // FLOATING POINT OPERATIONS
 		{
 			struct { float b, a; } fops;
 			uint8_t cmd = (opcode & 0x3c) >> 2;

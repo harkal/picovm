@@ -12,7 +12,9 @@
 
 #define UNUSED __attribute__((unused))
 
-const uint16_t mem_size = 1024;
+// #define DO_TRACE true
+
+const uint16_t mem_size = 0xffff;
 
 uint8_t vm_memory[mem_size];
 
@@ -53,18 +55,34 @@ void dump_stack(struct picovm_s *vm, uint16_t size)
 	printf("\n");
 }
 
-void trace(struct picovm_s *vm, uint16_t size)
+int trace_op(struct picovm_s *vm, uint16_t ip, char *str) 
 {
 	char mnemonic[16];
 	mnemonic[0] = 0;
+	int size = disassemble(vm->mem, ip, mnemonic);
+	sprintf(str, "0x%04x:\t%s [", ip, mnemonic);
+	int i = 0;
+	if (size <=0) size = 1;
+	while(i < size) {
+		sprintf(str, "%s%02x", str, *(uint8_t*)(vm->mem + ip + i));
+		++i;
+	}
+	sprintf(str, "%s]", str);
+	return size;
+}
+
+void trace(struct picovm_s *vm)
+{
+	char disasm[64];
+	disasm[0] = 0;
 
 	printf("\n");
 
-	int s = disassemble(vm->mem, vm->ip, mnemonic);
-	printf("\x1B[93m-> %s\033[0m\n", mnemonic);
+	int s = trace_op(vm, vm->ip, disasm);
+	printf("\x1B[93m-> %s\033[0m\n", disasm);
 	if (s > 0) {
-		disassemble(vm->mem, vm->ip + s, mnemonic);
-		printf("   %s\n", mnemonic);
+		trace_op(vm, vm->ip + s, disasm);
+		printf("   %s\n", disasm);
 	}
 }
 
@@ -103,11 +121,16 @@ exit_with_helpmsg:
 	fclose(f);
 
 	int i;
-	for(i = 0 ; i < 1000 ; i++) {
-		trace(&vm, mem_size);
+	for(i = 0 ; 1 ; i++) {
+#ifdef DO_TRACE
+		trace(&vm);
+#endif
 		if(picovm_exec(&vm))
 			break;
+#ifdef DO_TRACE
 		dump_stack(&vm, mem_size);
+		getchar();
+#endif
 	}
 
 	printf("\nExecuted %d instructions", i);
