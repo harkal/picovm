@@ -315,14 +315,14 @@ int8_t picovm_exec(struct picovm_s *vm)
 		case 0xbc: // CONVI
 		{
 			float f_value = *(float *)(vm->sp);
-			*(uint32_t *)(vm->sp) = f_value;
+			*(int32_t *)(vm->sp) = (int32_t)f_value;
 			vm->ip++;
 			break;
 		}
 		case 0xbc + 1: // CONVF
 		{
-			uint32_t i_value = *(uint32_t *)(vm->sp);
-			*(float *)(vm->sp) = i_value;
+			int32_t i_value = *(int32_t *)(vm->sp);
+			*(float *)(vm->sp) = (float)i_value;
 			vm->ip++;
 			break;
 		}
@@ -330,7 +330,7 @@ int8_t picovm_exec(struct picovm_s *vm)
 		// JMP addr
 		case 0xc0 ... 0xc0+16: // Branching
 		{			
-			uint32_t addr;
+			uint16_t addr;
 
 			// Get jump address
 			if ((opcode & 1) == 0) {
